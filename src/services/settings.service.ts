@@ -23,7 +23,7 @@ export interface SystemConfig {
 export const DEFAULT_SYSTEM_CONFIG: SystemConfig = {
   p2hToken: "#BATARAMPH2026",
   portalUrl: typeof window !== "undefined" ? `${window.location.origin}/p2h` : "http://localhost:3000/p2h",
-  companyName: "PT Batara Mining (PT Batara Guru Mulia)",
+  companyName: "PT Batara Dharma Persada",
   siteLocation: "Workshop Central Plant - Hauling KM 14",
   emergencyHseContact: "+62 811-5500-9911 (HSE Control Room 24/7)",
   plantWorkshopContact: "+62 811-5500-9922 (Maintenance Dispatcher)",

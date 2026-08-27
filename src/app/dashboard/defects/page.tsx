@@ -51,6 +51,7 @@ import {
 } from "@/lib/swal";
 import { fetchUnits, Unit } from "@/services/unit.service";
 import { getAuthSession } from "@/services/auth.service";
+import Pagination from "@/components/Pagination";
 
 export default function DefectsPage() {
   // Data States
@@ -80,6 +81,16 @@ export default function DefectsPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [severityFilter, setSeverityFilter] = useState<string>("ALL");
+
+  // Pagination State
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 1,
+  });
 
   // Modal: Update Status & Work Order
   const [selectedDefect, setSelectedDefect] = useState<DefectItem | null>(null);
@@ -121,11 +132,11 @@ export default function DefectsPage() {
       setBdDriverName(`${session.user.firstName || ""} ${session.user.lastName || ""}`.trim());
       setBdDriverNrp(session.user.nrp ? String(session.user.nrp) : "");
     }
-    loadData();
+    loadData(1, limit);
     loadUnits();
   }, []);
 
-  const loadData = async () => {
+  const loadData = async (pageToLoad = page, limitToLoad = limit) => {
     setIsLoading(true);
     try {
       const [listRes, statsRes] = await Promise.all([
@@ -134,6 +145,8 @@ export default function DefectsPage() {
           status: statusFilter !== "ALL" ? statusFilter : undefined,
           severity: severityFilter !== "ALL" ? severityFilter : undefined,
           search: search.trim() || undefined,
+          page: pageToLoad,
+          limit: limitToLoad,
         }),
         fetchDefectStats().catch(() => ({
           success: false,
@@ -159,19 +172,33 @@ export default function DefectsPage() {
 
       if (listRes.success) {
         setDefects(listRes.data || []);
+        if (listRes.pagination) {
+          setPagination(listRes.pagination);
+        }
       }
-      if (statsRes.data) {
+      if (statsRes.success && statsRes.data) {
         setStats(statsRes.data);
       }
-    } catch (err: any) {
+    } catch (error: any) {
       setAlert({
         type: "error",
         title: "Gagal Memuat Data",
-        message: err.message || "Tidak dapat memuat data defect & breakdown.",
+        message: error.message || "Tidak dapat mengambil data defect & breakdown.",
       });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    loadData(newPage, limit);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setLimit(newSize);
+    setPage(1);
+    loadData(1, newSize);
   };
 
   const loadUnits = async () => {
@@ -483,7 +510,7 @@ export default function DefectsPage() {
 
         <div className="flex flex-wrap items-center gap-2.5">
           <button
-            onClick={loadData}
+            onClick={() => loadData()}
             disabled={isLoading}
             className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
             title="Segarkan Data"
@@ -974,6 +1001,17 @@ export default function DefectsPage() {
           })
         )}
       </div>
+
+      {/* ================= PAGINATION ================= */}
+      <Pagination
+        currentPage={page}
+        totalPages={pagination.totalPages || 1}
+        totalItems={pagination.total || 0}
+        pageSize={limit}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+        isLoading={isLoading}
+      />
 
       {/* ================= MODAL: UPDATE STATUS & WORK ORDER ================= */}
       {isUpdateModalOpen && selectedDefect && (

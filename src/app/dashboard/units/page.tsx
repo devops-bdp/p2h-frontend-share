@@ -34,6 +34,7 @@ import {
   showToast,
 } from "@/lib/swal";
 import { getAuthSession } from "@/services/auth.service";
+import Pagination from "@/components/Pagination";
 
 const CATEGORIES = [
   { value: "EXCAVATOR", label: "Excavator" },
@@ -55,6 +56,10 @@ export default function UnitsPage() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   // Alert State
   const [alert, setAlert] = useState<{
@@ -100,6 +105,7 @@ export default function UnitsPage() {
         status: statusFilter || undefined,
       });
       setUnits(res.data || []);
+      setPage(1);
     } catch (error: any) {
       setAlert({
         type: "error",
@@ -116,6 +122,23 @@ export default function UnitsPage() {
     loadUnits();
   };
 
+  // Paginated data slice
+  const paginatedUnits = useMemo(() => {
+    const start = (page - 1) * limit;
+    return units.slice(start, start + limit);
+  }, [units, page, limit]);
+
+  const totalPages = Math.ceil(units.length / limit) || 1;
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setLimit(newSize);
+    setPage(1);
+  };
+
   // Open Create Modal
   const handleOpenCreate = () => {
     setModalMode("create");
@@ -125,7 +148,7 @@ export default function UnitsPage() {
       category: "EXCAVATOR",
       brand: "",
       description: "",
-      ownerName: "PT Batara Mining",
+      ownerName: "PT Batara Dharma Persada",
       km: 0,
       hourMeter: null,
       status: "ACTIVE",
@@ -470,7 +493,7 @@ export default function UnitsPage() {
                   </td>
                 </tr>
               ) : (
-                units.map((unit) => (
+                paginatedUnits.map((unit) => (
                   <tr
                     key={unit.id}
                     className="hover:bg-slate-800/40 transition-colors group"
@@ -582,7 +605,7 @@ export default function UnitsPage() {
             </p>
           </div>
         ) : (
-          units.map((unit) => (
+          paginatedUnits.map((unit) => (
             <div
               key={unit.id}
               className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3 shadow-md"
@@ -665,6 +688,17 @@ export default function UnitsPage() {
           ))
         )}
       </div>
+
+      {/* ================= PAGINATION ================= */}
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        totalItems={units.length}
+        pageSize={limit}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+        isLoading={isLoading}
+      />
 
       {/* ================= MODAL TAMBAH / EDIT UNIT ================= */}
       {isModalOpen && (
@@ -757,7 +791,7 @@ export default function UnitsPage() {
                     required
                     value={formData.ownerName}
                     onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
-                    placeholder="Contoh: PT Batara Mining"
+                    placeholder="Contoh: PT Batara Dharma Persada"
                     className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                   />
                 </div>

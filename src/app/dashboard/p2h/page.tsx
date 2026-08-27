@@ -55,6 +55,7 @@ import {
   showToast,
 } from "@/lib/swal";
 import { getAuthSession } from "@/services/auth.service";
+import Pagination from "@/components/Pagination";
 
 export default function P2HListPage() {
   const [inspections, setInspections] = useState<P2HInspection[]>([]);
@@ -71,6 +72,16 @@ export default function P2HListPage() {
   const [sectionFilter, setSectionFilter] = useState("");
   const [unitStatusFilter, setUnitStatusFilter] = useState("");
   const [driverStatusFilter, setDriverStatusFilter] = useState("");
+
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 1,
+  });
 
   // Detail Modal State
   const [selectedInspection, setSelectedInspection] = useState<P2HInspection | null>(null);
@@ -94,10 +105,10 @@ export default function P2HListPage() {
   useEffect(() => {
     const session = getAuthSession();
     setUser(session.user);
-    loadData();
+    loadData(1, limit);
   }, []);
 
-  const loadData = async () => {
+  const loadData = async (pageToLoad = page, limitToLoad = limit) => {
     setIsLoading(true);
     try {
       const [listRes, statsRes] = await Promise.all([
@@ -107,6 +118,8 @@ export default function P2HListPage() {
           section: sectionFilter || undefined,
           unitStatus: unitStatusFilter || undefined,
           driverStatus: driverStatusFilter || undefined,
+          page: pageToLoad,
+          limit: limitToLoad,
         }),
         fetchP2HStats().catch(() => ({
           success: false,
@@ -115,6 +128,9 @@ export default function P2HListPage() {
       ]);
 
       setInspections(listRes.data || []);
+      if (listRes.pagination) {
+        setPagination(listRes.pagination);
+      }
       if (statsRes.data) {
         setStats(statsRes.data);
       }
@@ -131,7 +147,19 @@ export default function P2HListPage() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    loadData();
+    setPage(1);
+    loadData(1, limit);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    loadData(newPage, limit);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setLimit(newSize);
+    setPage(1);
+    loadData(1, newSize);
   };
 
   const handleOpenDetail = (item: P2HInspection) => {
@@ -207,7 +235,7 @@ export default function P2HListPage() {
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Portal digitalisasi inspeksi harian armada Light Vehicle (LV) dan unit site PT Batara Mining.
+            Portal digitalisasi inspeksi harian armada Light Vehicle (LV) dan unit site PT Batara Dharma Persada.
           </p>
         </div>
 
@@ -379,7 +407,7 @@ export default function P2HListPage() {
             {/* Refresh Button */}
             <button
               type="button"
-              onClick={loadData}
+              onClick={() => loadData()}
               disabled={isLoading}
               className="p-2.5 sm:p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
               title="Segarkan Data"
@@ -752,6 +780,17 @@ export default function P2HListPage() {
           })
         )}
       </div>
+
+      {/* ================= PAGINATION ================= */}
+      <Pagination
+        currentPage={page}
+        totalPages={pagination.totalPages || 1}
+        totalItems={pagination.total || 0}
+        pageSize={limit}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+        isLoading={isLoading}
+      />
 
       {/* ================= DETAIL CHECKLIST MODAL ================= */}
       {isDetailOpen && selectedInspection && (

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "BATARA MP P2H PORTAL - Sistem Pelaksanaan Pemeriksaan Harian",
   description:
-    "Aplikasi Pelaksanaan Pemeriksaan Harian (P2H) armada kendaraan support dan alat berat PT Batara Mining.",
+    "Aplikasi Pelaksanaan Pemeriksaan Harian (P2H) armada kendaraan support dan alat berat PT Batara Dharma Persada.",
 };
 
 export default function RootLayout({

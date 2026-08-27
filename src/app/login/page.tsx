@@ -94,45 +94,115 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-amber-500 selection:text-slate-950 relative overflow-hidden">
-      {/* Background Decorative Glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-150 h-96 bg-amber-500/10 blur-3xl rounded-full pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-100 h-80 bg-amber-600/10 blur-3xl rounded-full pointer-events-none" />
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col lg:flex-row selection:bg-amber-500 selection:text-slate-950">
+      {/* ================= LEFT HALF: HERO IMAGE & BRANDING (50%) ================= */}
+      <div className="relative w-full lg:w-1/2 min-h-80 lg:min-h-screen flex flex-col justify-between p-6 sm:p-10 lg:p-12 overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-800/80">
+        {/* Background Photo */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-700 hover:scale-105"
+          style={{ backgroundImage: "url('/login-screeen.jpeg')" }}
+        />
 
-      {/* Top Header Navigation */}
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-10">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-amber-400 transition-colors group"
-        >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-200" />
-          <span>Kembali ke Beranda</span>
-        </Link>
+        {/* Multi-layer Dark Gradient Overlays */}
+        <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/60 to-slate-950/30" />
+        <div className="absolute inset-0 bg-linear-to-r from-slate-950/80 via-slate-950/40 to-transparent hidden lg:block" />
+        <div className="absolute inset-0 bg-slate-950/20 backdrop-blur-[1px]" />
+
+        {/* Top Header: Back Button & Site Logo */}
+        <div className="relative z-10 flex items-center justify-between gap-4">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 text-xs font-semibold text-slate-200 hover:text-white border border-slate-700/60 backdrop-blur-md transition-all group shadow-lg shadow-black/40"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform duration-200 text-amber-400" />
+            <span>Kembali ke Beranda</span>
+          </Link>
+
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/70 border border-slate-850 backdrop-blur-md">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[11px] font-medium text-slate-300">Site Muara Pahu</span>
+          </div>
+        </div>
+
+        {/* Bottom Card: Plant Maintenance Quote & Badges */}
+        <div className="relative z-10 mt-auto pt-8 space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold tracking-wide backdrop-blur-md">
+            <HardHat className="w-3.5 h-3.5 text-amber-400" />
+            <span>PLANT MAINTENANCE &amp; FLEET SAFETY</span>
+          </div>
+
+          <div className="space-y-2 max-w-lg">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight drop-shadow-md">
+              Keandalan Armada,{" "}
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-amber-400 via-amber-300 to-yellow-200">
+                Keselamatan Kerja Utama.
+              </span>
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 font-normal leading-relaxed drop-shadow">
+              Digitalisasi Pelaksanaan Pemeriksaan Harian (P2H) armada kendaraan support dan alat berat PT Batara Dharma Persada sebelum beroperasi di site tambang.
+            </p>
+          </div>
+
+          {/* Feature Badges Pill */}
+          <div className="pt-2 flex flex-wrap items-center gap-2 text-[11px] font-medium text-slate-300">
+            <span className="px-2.5 py-1 rounded-md bg-slate-900/80 border border-slate-700/60 backdrop-blur-md">
+              ⚡ Paperless Checklist
+            </span>
+            <span className="px-2.5 py-1 rounded-md bg-slate-900/80 border border-slate-700/60 backdrop-blur-md">
+              🛡️ K3 Safety Compliance
+            </span>
+            <span className="px-2.5 py-1 rounded-md bg-slate-900/80 border border-slate-700/60 backdrop-blur-md">
+              📊 Real-Time Defect Tracking
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Main Login Card Container */}
-      <div className="w-full max-w-md mx-auto px-4 py-8 relative z-10 flex-1 flex flex-col justify-center">
-        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-black/80 backdrop-blur-xl">
-          {/* Logo & Brand Header */}
-          <div className="text-center space-y-3 mb-8">
-            <div className="inline-flex w-14 h-14 rounded-2xl bg-linear-to-tr from-amber-500 via-amber-400 to-yellow-300 items-center justify-center shadow-lg shadow-amber-500/25">
-              <Truck className="w-7 h-7 text-slate-950" strokeWidth={2.5} />
-            </div>
+      {/* ================= RIGHT HALF: LOGIN FORM (50%) ================= */}
+      <div className="relative w-full lg:w-1/2 flex flex-col justify-between p-6 sm:p-10 lg:p-12 min-h-screen bg-slate-950 overflow-y-auto">
+        {/* Subtle Ambient Glows */}
+        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-amber-500/5 blur-3xl rounded-full pointer-events-none" />
+        <div className="absolute bottom-10 left-10 w-72 h-72 bg-teal-500/5 blur-3xl rounded-full pointer-events-none" />
 
-            <div>
-              <h1 className="text-2xl font-extrabold tracking-tight text-white">
-                BATARA MP <span className="text-amber-500">P2H PORTAL</span>
+        {/* Top Header Placeholder (Alignment) */}
+        <div className="hidden lg:flex justify-end items-center text-xs text-slate-500">
+          <span>Portal Versi 1.0</span>
+        </div>
+
+        {/* Centered Form Wrapper */}
+        <div className="w-full max-w-md mx-auto my-auto py-6 relative z-10 space-y-6">
+          {/* Logo & Heading */}
+          <div className="space-y-3">
+            <Link href="/" className="inline-flex items-center gap-3 group">
+              <img
+                src="/logo-navbar-transparant1.png"
+                alt="Plant Maintenance Muara Pahu Site"
+                className="h-12 sm:h-14 w-auto object-contain group-hover:scale-105 transition-transform duration-200"
+              />
+              <div className="flex flex-col leading-tight">
+                <span className="font-extrabold text-sm sm:text-base tracking-wide text-slate-200 uppercase">
+                  Plant Maintenance
+                </span>
+                <span className="font-bold text-xs tracking-widest text-teal-400 uppercase">
+                  Muara Pahu Site
+                </span>
+              </div>
+            </Link>
+
+            <div className="pt-2">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                Masuk ke Portal P2H
               </h1>
-              <p className="text-xs text-slate-400 mt-1">
-                Portal Pelaksanaan Pemeriksaan Harian Alat &amp; Unit
+              <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                Gunakan Nomor Registrasi Pokok (NRP) dan kata sandi akun Anda untuk mengakses sistem.
               </p>
             </div>
           </div>
 
-          {/* ================= ALERT NOTIFICATION ================= */}
+          {/* Alert Notification */}
           {alert && (
             <div
-              className={`mb-6 p-4 rounded-2xl border flex items-start gap-3 transition-all animate-in fade-in slide-in-from-top-2 duration-300 ${
+              className={`p-4 rounded-2xl border flex items-start gap-3 transition-all animate-in fade-in slide-in-from-top-2 duration-300 ${
                 alert.type === "success"
                   ? "bg-emerald-950/80 border-emerald-500/40 text-emerald-200 shadow-lg shadow-emerald-950/50"
                   : "bg-rose-950/80 border-rose-500/40 text-rose-200 shadow-lg shadow-rose-950/50"
@@ -166,8 +236,8 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* ================= LOGIN FORM ================= */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* NRP Field */}
             <div className="space-y-1.5">
               <label
@@ -188,7 +258,7 @@ export default function LoginPage() {
                   onChange={(e) => setNrp(e.target.value)}
                   placeholder="Contoh: 12345"
                   disabled={isLoading}
-                  className="w-full pl-10 pr-4 py-3 bg-slate-950/70 border border-slate-800 rounded-xl text-sm placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-colors disabled:opacity-50"
+                  className="w-full pl-10 pr-4 py-3 bg-slate-900/80 border border-slate-800 rounded-xl text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all disabled:opacity-50"
                   required
                 />
               </div>
@@ -201,7 +271,7 @@ export default function LoginPage() {
                   htmlFor="password"
                   className="block text-xs font-semibold text-slate-300 uppercase tracking-wider"
                 >
-                  Password
+                  Kata Sandi
                 </label>
               </div>
               <div className="relative">
@@ -213,9 +283,9 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Masukkan password akun"
+                  placeholder="Masukkan kata sandi akun"
                   disabled={isLoading}
-                  className="w-full pl-10 pr-11 py-3 bg-slate-950/70 border border-slate-800 rounded-xl text-sm placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-colors disabled:opacity-50"
+                  className="w-full pl-10 pr-11 py-3 bg-slate-900/80 border border-slate-800 rounded-xl text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all disabled:opacity-50"
                   required
                 />
                 <button
@@ -237,7 +307,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-2 py-3.5 px-4 bg-linear-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 active:scale-95 text-slate-950 font-bold text-sm rounded-xl shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full mt-2 py-3.5 px-4 bg-linear-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 active:scale-98 text-slate-950 font-bold text-sm rounded-xl shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
@@ -247,24 +317,36 @@ export default function LoginPage() {
               ) : (
                 <>
                   <ShieldCheck className="w-4 h-4" strokeWidth={2.5} />
-                  <span>Masuk ke Portal P2H</span>
+                  <span>Masuk ke Dashboard</span>
                   <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
                 </>
               )}
             </button>
           </form>
 
-          {/* Quick Help / Footer Badge */}
-          <div className="mt-8 pt-6 border-t border-slate-850 flex items-center justify-center gap-2 text-center text-xs text-slate-500">
-            <HardHat className="w-3.5 h-3.5 text-amber-500/70" />
-            <span>Safety First &bull; PT Batara Mining</span>
+          {/* Quick Info / Portal Direct Link */}
+          <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-850 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2.5 text-slate-400">
+              <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>Ingin isi form P2H publik tanpa login?</span>
+            </div>
+            <Link
+              href="/p2h"
+              className="font-semibold text-amber-400 hover:text-amber-300 underline underline-offset-2 transition-colors shrink-0 ml-2"
+            >
+              Portal P2H &rarr;
+            </Link>
           </div>
         </div>
-      </div>
 
-      {/* Page Bottom Copyright */}
-      <div className="w-full text-center py-6 text-xs text-slate-600 relative z-10">
-        &copy; {new Date().getFullYear()} PT Batara Mining. Hak cipta dilindungi.
+        {/* Footer info */}
+        <div className="w-full text-center lg:text-left py-4 text-xs text-slate-500 border-t border-slate-850 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <span>&copy; {new Date().getFullYear()} PT Batara Dharma Persada &bull; Site Muara Pahu</span>
+          <div className="flex items-center gap-1 text-slate-500">
+            <HardHat className="w-3.5 h-3.5 text-amber-500/70" />
+            <span>Safety First</span>
+          </div>
+        </div>
       </div>
     </div>
   );

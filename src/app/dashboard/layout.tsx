@@ -39,9 +39,19 @@ export default function DashboardLayout({
 
             {/* Mobile Brand Name */}
             <div className="flex md:hidden items-center gap-2">
-              <span className="font-bold text-sm text-white">
-                BATARA MP <span className="text-amber-500">P2H PORTAL</span>
-              </span>
+              <img
+                src="/logo-navbar-transparant1.png"
+                alt="Plant Maintenance Muara Pahu Site"
+                className="h-8 w-auto object-contain"
+              />
+              <div className="flex flex-col leading-none">
+                <span className="font-extrabold text-xs tracking-wide text-slate-200 uppercase">
+                  Plant Maintenance
+                </span>
+                <span className="font-bold text-[9px] tracking-wider text-teal-400 uppercase">
+                  Muara Pahu Site
+                </span>
+              </div>
             </div>
 
             {/* Date / Status Indicator (Desktop) */}

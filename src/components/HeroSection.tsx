@@ -17,8 +17,8 @@ export default function HeroSection() {
         style={{ backgroundImage: "url('/hero-1.jpeg')" }}
       />
       {/* Dark gradient overlay — keeps text readable */}
-      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-slate-950/50" />
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/40" />
+      <div className="absolute inset-0 bg-linear-to-r from-slate-950/95 via-slate-950/80 to-slate-950/50" />
+      <div className="absolute inset-0 bg-linear-to-t from-slate-950/80 via-transparent to-slate-950/40" />
       {/* Amber glow accent */}
       <div className="absolute top-1/3 left-1/4 w-96 h-64 bg-amber-500/10 blur-3xl rounded-full pointer-events-none" />
 
@@ -40,7 +40,7 @@ export default function HeroSection() {
 
             <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto lg:mx-0 font-normal leading-relaxed">
               Platform digitalisasi P2H untuk memastikan seluruh kendaraan
-              support dan alat berat <span className="text-white font-medium">PT Batara Mining</span> dalam kondisi siap operasi (ready-to-work), aman, dan terpelihara optimal sebelum memasuki area tambang.
+              support dan alat berat <span className="text-white font-medium">PT Batara Dharma Persada</span> dalam kondisi siap operasi (ready-to-work), aman, dan terpelihara optimal sebelum memasuki area tambang.
             </p>
 
             {/* CTA Buttons */}

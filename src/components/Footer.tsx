@@ -12,7 +12,7 @@ export default function Footer() {
             </div>
             <div>
               <span className="font-bold text-white tracking-tight">BATARA MP P2H PORTAL</span>
-              <p className="text-xs text-slate-500">PT Batara Mining &amp; Heavy Equipment</p>
+              <p className="text-xs text-slate-500">PT Batara Dharma Persada</p>
             </div>
           </div>
 
@@ -23,7 +23,7 @@ export default function Footer() {
           </div>
 
           <div className="text-xs text-slate-500">
-            &copy; {new Date().getFullYear()} PT Batara Mining. All rights reserved.
+            &copy; {new Date().getFullYear()} PT Batara Dharma Persada. All rights reserved.
           </div>
         </div>
       </div>

@@ -115,17 +115,22 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Top Section: Brand & User Profile */}
         <div>
           {/* Brand Header */}
-          <div className="h-16 md:h-20 flex items-center justify-between px-5 border-b border-slate-850">
-            <Link href="/dashboard" className="flex items-center gap-3 group">
-              <div className="w-9 h-9 rounded-xl bg-linear-to-tr from-amber-500 via-amber-400 to-yellow-300 flex items-center justify-center shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform duration-200">
-                <Truck className="w-5 h-5 text-slate-950" strokeWidth={2.5} />
+          <div className="h-16 md:h-20 flex items-center justify-between px-4 border-b border-slate-850">
+            <Link href="/dashboard" className="flex items-center gap-2.5 group min-w-0">
+              <div className="group-hover:opacity-90 transition-opacity duration-200 shrink-0">
+                <img
+                  src="/logo-navbar-transparant1.png"
+                  alt="Plant Maintenance Muara Pahu Site"
+                  className="h-10 md:h-12 w-auto object-contain"
+                  style={{ display: "block" }}
+                />
               </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-base tracking-tight text-white group-hover:text-amber-400 transition-colors">
-                  BATARA MP <span className="text-amber-500">P2H PORTAL</span>
+              <div className="flex flex-col leading-tight min-w-0">
+                <span className="font-extrabold text-xs tracking-wide text-slate-200 uppercase truncate">
+                  Plant Maintenance
                 </span>
-                <span className="text-xs text-slate-400 font-medium">
-                  Portal Operasional Site
+                <span className="font-bold text-[10px] tracking-wider text-teal-400 uppercase truncate">
+                  Muara Pahu Site
                 </span>
               </div>
             </Link>
@@ -134,7 +139,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             {onClose && (
               <button
                 onClick={onClose}
-                className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 border border-slate-800"
+                className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 border border-slate-800 shrink-0"
                 aria-label="Close Sidebar"
               >
                 <X className="w-5 h-5" />

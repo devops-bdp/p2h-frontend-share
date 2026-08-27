@@ -211,6 +211,7 @@ function P2HFormContent() {
   // Form States - Identity
   const [selectedUnitId, setSelectedUnitId] = useState<string>(rawUnitId || "");
   const [selectedDriverId, setSelectedDriverId] = useState<string>("");
+  const isDriverLocked = Boolean(selectedDriverId && selectedDriverId !== "custom");
   const [driverName, setDriverName] = useState<string>("");
   const [driverNrp, setDriverNrp] = useState<string>("");
   const [nopol, setNopol] = useState<string>("");
@@ -351,20 +352,17 @@ function P2HFormContent() {
 
   // Selected unit object
   const selectedUnit = useMemo(() => {
-    return units.find((u) => String(u.id) === String(selectedUnitId)) || null;
-  }, [units, selectedUnitId]);
+    return categoryUnits.find((u) => String(u.id) === String(selectedUnitId)) || null;
+  }, [categoryUnits, selectedUnitId]);
 
   // Unit selection handler in Section 1
-  const handleUnitSelect = (unitIdStr: string) => {
-    setSelectedUnitId(unitIdStr);
-    const u = units.find((item) => String(item.id) === String(unitIdStr));
+  const handleUnitSelect = (unitId: string) => {
+    setSelectedUnitId(unitId);
+    const u = categoryUnits.find((item) => String(item.id) === String(unitId));
     if (u) {
-      setNopol((u as any).nopol || "");
-      if (u.km != null) setKm(u.km);
       if (u.hourMeter != null) setHourMeter(u.hourMeter);
-      if (u.category === "GENSET" || u.category === "COMPRESSOR") {
-        setKm(0);
-      }
+      if (u.km != null) setKm(u.km);
+      if ((u as any).nopol) setNopol((u as any).nopol);
       if (u.category === "COMPRESSOR") {
         if (u.brand?.toLowerCase().includes("listrik") || u.description?.toLowerCase().includes("listrik")) {
           setCompressorType("COMPRESSOR LISTRIK");
@@ -377,6 +375,10 @@ function P2HFormContent() {
 
   // Handle Driver Select
   const handleDriverSelect = (driverId: string) => {
+    if (driverId === "custom" || driverId === "") {
+      setSelectedDriverId("custom");
+      return;
+    }
     setSelectedDriverId(driverId);
     const d = drivers.find((drv) => String(drv.id) === String(driverId));
     if (d) {
@@ -627,12 +629,34 @@ function P2HFormContent() {
       return;
     }
 
+    // Validasi Angka KM tidak boleh kurang dari KM unit saat ini
+    if (!isGenset && !isCompressor && km !== "" && selectedUnit?.km != null && selectedUnit.km > 0) {
+      if (Number(km) < selectedUnit.km) {
+        showAlertWarning(
+          "Validasi KM Tidak Valid",
+          `Angka KM (${km}) tidak boleh lebih rendah dari KM unit saat ini (${selectedUnit.km} KM). Silakan masukkan angka KM aktual yang sama atau lebih besar.`
+        );
+        return;
+      }
+    }
+
     if ((isTelehandler || isGenset || isCompressor) && (hourMeter === "" || Number(hourMeter) < 0)) {
       showAlertWarning(
         "Hour Meter (HM) Wajib Diisi",
         `Hour Meter (HM) Unit ${isGenset ? "Genset" : isCompressor ? "Kompresor" : "Telehandler"} wajib diisi.`
       );
       return;
+    }
+
+    // Validasi Angka HM tidak boleh kurang dari HM unit saat ini
+    if (hourMeter !== "" && selectedUnit?.hourMeter != null && selectedUnit.hourMeter > 0) {
+      if (Number(hourMeter) < selectedUnit.hourMeter) {
+        showAlertWarning(
+          "Validasi HM Tidak Valid",
+          `Angka Hour Meter / HM (${hourMeter}) tidak boleh lebih rendah dari HM unit saat ini (${selectedUnit.hourMeter} HM). Silakan masukkan angka HM aktual yang sama atau lebih besar.`
+        );
+        return;
+      }
     }
 
     if (!driverValidation) {
@@ -693,6 +717,22 @@ function P2HFormContent() {
       if (res.success) {
         setCreatedP2H(res.data);
         setShowSuccessModal(true);
+
+        // Update local unit state with newly recorded KM/HM
+        const newKmVal = isGenset || isCompressor ? (km === "" ? 0 : Number(km)) : Number(km);
+        const newHmVal = hourMeter !== "" ? Number(hourMeter) : selectedUnit?.hourMeter || null;
+        setUnits((prevUnits) =>
+          prevUnits.map((u) =>
+            String(u.id) === String(selectedUnitId)
+              ? {
+                  ...u,
+                  km: (newKmVal != null && newKmVal > (u.km || 0)) ? newKmVal : u.km,
+                  hourMeter: (newHmVal != null && newHmVal > (u.hourMeter || 0)) ? newHmVal : u.hourMeter,
+                }
+              : u
+          )
+        );
+
         showAlertSuccess(
           "P2H Berhasil Disimpan!",
           `Inspeksi harian unit ${headerInfo.badge} telah tercatat resmi dengan No P2H: ${res.data.p2hNo}.`
@@ -1033,14 +1073,22 @@ function P2HFormContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* NAMA OPERATOR/DRIVER */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-300">
-                  NAMA OPERATOR / INSPEKTOR <span className="text-amber-400">*</span>
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-slate-300">
+                    NAMA OPERATOR / INSPEKTOR <span className="text-amber-400">*</span>
+                  </label>
+                  {isDriverLocked && (
+                    <span className="text-[10px] text-amber-400 font-medium flex items-center gap-1">
+                      <Lock className="w-3 h-3" />
+                      Terkunci otomatis
+                    </span>
+                  )}
+                </div>
                 <div className="space-y-2">
                   <select
                     value={selectedDriverId}
                     onChange={(e) => handleDriverSelect(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer"
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer text-white"
                   >
                     <option value="" disabled className="bg-slate-950">
                       -- Pilih Operator/Inspektor dari Database User --
@@ -1050,82 +1098,156 @@ function P2HFormContent() {
                         {d.firstName} {d.lastName || ""} (NRP: {d.nrp} - {d.posision} / Dept. {d.department})
                       </option>
                     ))}
+                    <option value="custom" className="bg-slate-950 text-amber-400 font-semibold">
+                      + Input Manual / Nama Lainnya...
+                    </option>
                   </select>
 
-                  <input
-                    type="text"
-                    required
-                    value={driverName}
-                    onChange={(e) => {
-                      setDriverName(e.target.value);
-                      setSelectedDriverId("");
-                    }}
-                    placeholder="Atau ketik nama lengkap operator/inspektor manual..."
-                    className="w-full px-3.5 py-2 bg-slate-950/60 border border-slate-800/80 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
-                  />
+                  <div className="relative">
+                    {isDriverLocked ? (
+                      <Lock className="w-4 h-4 text-amber-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    ) : (
+                      <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    )}
+                    <input
+                      type="text"
+                      required
+                      readOnly={isDriverLocked}
+                      value={driverName}
+                      onChange={(e) => {
+                        setDriverName(e.target.value);
+                        setSelectedDriverId("custom");
+                      }}
+                      placeholder="Nama lengkap operator/inspektor..."
+                      className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-xs focus:outline-none transition-all ${
+                        isDriverLocked
+                          ? "bg-slate-900/90 border border-slate-800 text-slate-300 cursor-not-allowed select-none focus:ring-0"
+                          : "bg-slate-950/70 border border-slate-800 placeholder:text-slate-500 focus:ring-1 focus:ring-amber-500"
+                      }`}
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* NRP DRIVER */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-300">
-                  NRP OPERATOR / INSPEKTOR <span className="text-amber-400">*</span>
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-slate-300">
+                    NRP OPERATOR / INSPEKTOR <span className="text-amber-400">*</span>
+                  </label>
+                  {isDriverLocked && (
+                    <span className="text-[10px] text-amber-400 font-medium flex items-center gap-1">
+                      <Lock className="w-3 h-3" />
+                      Terkunci otomatis
+                    </span>
+                  )}
+                </div>
                 <div className="relative">
-                  <User className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  {isDriverLocked ? (
+                    <Lock className="w-4 h-4 text-amber-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  ) : (
+                    <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  )}
                   <input
                     type="number"
                     required
+                    readOnly={isDriverLocked}
                     value={driverNrp}
                     onChange={(e) => setDriverNrp(e.target.value)}
-                    placeholder="Contoh: 24001234"
-                    className="w-full pl-9 pr-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    placeholder={isDriverLocked ? "NRP terkunci otomatis sesuai user" : "Contoh: 24001234"}
+                    className={`w-full py-2.5 rounded-xl text-xs focus:outline-none transition-all ${
+                      isDriverLocked
+                        ? "pl-10 pr-3.5 bg-slate-900/90 border border-slate-800 text-slate-300 cursor-not-allowed select-none focus:ring-0"
+                        : "pl-10 pr-3.5 bg-slate-950 border border-slate-800 placeholder:text-slate-500 focus:ring-1 focus:ring-amber-500"
+                    }`}
                   />
                 </div>
               </div>
 
               {/* Hour Meter (HM) */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-300">
-                  Hour Meter (HM) {(isTelehandler || isGenset || isCompressor) && <span className="text-amber-400">*</span>}
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-slate-300">
+                    Hour Meter (HM) {(isTelehandler || isGenset || isCompressor) && <span className="text-amber-400">*</span>}
+                  </label>
+                  {selectedUnit?.hourMeter != null && selectedUnit.hourMeter > 0 && (
+                    <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                      HM Terakhir: <strong>{selectedUnit.hourMeter}</strong>
+                    </span>
+                  )}
+                </div>
                 <div className="relative">
                   <Clock className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="number"
-                    min="0"
+                    min={selectedUnit?.hourMeter != null ? selectedUnit.hourMeter : 0}
                     step="0.1"
                     required={isTelehandler || isGenset || isCompressor}
                     value={hourMeter}
                     onChange={(e) => setHourMeter(e.target.value === "" ? "" : Number(e.target.value))}
-                    placeholder={isTelehandler || isGenset || isCompressor ? "Wajib diisi (Contoh: 340.5)" : "Opsional (Contoh: 120)"}
-                    className={`w-full pl-9 pr-3.5 py-2.5 bg-slate-950 border rounded-xl text-xs focus:outline-none ${
-                      isTelehandler || isGenset || isCompressor
+                    placeholder={
+                      selectedUnit?.hourMeter != null
+                        ? `Min. ${selectedUnit.hourMeter} (Contoh: ${selectedUnit.hourMeter + 5})`
+                        : isTelehandler || isGenset || isCompressor
+                        ? "Wajib diisi (Contoh: 340.5)"
+                        : "Opsional (Contoh: 120)"
+                    }
+                    className={`w-full pl-9 pr-3.5 py-2.5 bg-slate-950 border rounded-xl text-xs focus:outline-none transition-all ${
+                      hourMeter !== "" && selectedUnit?.hourMeter != null && Number(hourMeter) < selectedUnit.hourMeter
+                        ? "border-rose-500 text-rose-300 focus:ring-1 focus:ring-rose-500 bg-rose-950/20"
+                        : isTelehandler || isGenset || isCompressor
                         ? "border-amber-500/50 focus:ring-1 focus:ring-amber-500 bg-amber-500/5"
                         : "border-slate-800 focus:ring-1 focus:ring-amber-500"
                     }`}
                   />
                 </div>
+                {hourMeter !== "" && selectedUnit?.hourMeter != null && Number(hourMeter) < selectedUnit.hourMeter && (
+                  <p className="text-[11px] text-rose-400 flex items-center gap-1 font-medium pt-0.5 animate-in fade-in">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    <span>HM tidak boleh kurang dari HM sebelumnya ({selectedUnit.hourMeter} HM).</span>
+                  </p>
+                )}
               </div>
 
               {/* KM UNIT (Khusus unit non-genset & non-compressor) */}
               {!isGenset && !isCompressor && (
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-300">
-                    KM UNIT <span className="text-amber-400">*</span>
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-slate-300">
+                      KM UNIT <span className="text-amber-400">*</span>
+                    </label>
+                    {selectedUnit?.km != null && selectedUnit.km > 0 && (
+                      <span className="text-[10px] font-mono text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                        KM Terakhir: <strong>{selectedUnit.km}</strong>
+                      </span>
+                    )}
+                  </div>
                   <div className="relative">
                     <Gauge className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="number"
-                      min="0"
+                      min={selectedUnit?.km != null ? selectedUnit.km : 0}
                       required={!isGenset && !isCompressor}
                       value={km}
                       onChange={(e) => setKm(e.target.value === "" ? "" : Number(e.target.value))}
-                      placeholder="Contoh: 45200"
-                      className="w-full pl-9 pr-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      placeholder={
+                        selectedUnit?.km != null
+                          ? `Min. ${selectedUnit.km} (Contoh: ${selectedUnit.km + 20})`
+                          : "Contoh: 45200"
+                      }
+                      className={`w-full pl-9 pr-3.5 py-2.5 bg-slate-950 border rounded-xl text-xs focus:outline-none transition-all ${
+                        km !== "" && selectedUnit?.km != null && Number(km) < selectedUnit.km
+                          ? "border-rose-500 text-rose-300 focus:ring-1 focus:ring-rose-500 bg-rose-950/20"
+                          : "border-slate-800 focus:ring-1 focus:ring-amber-500"
+                      }`}
                     />
                   </div>
+                  {km !== "" && selectedUnit?.km != null && Number(km) < selectedUnit.km && (
+                    <p className="text-[11px] text-rose-400 flex items-center gap-1 font-medium pt-0.5 animate-in fade-in">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                      <span>KM tidak boleh kurang dari KM sebelumnya ({selectedUnit.km} KM).</span>
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -1180,20 +1302,38 @@ function P2HFormContent() {
 
               {/* SECTION */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-300">
-                  SECTION <span className="text-amber-400">*</span>
-                </label>
-                <select
-                  value={section}
-                  onChange={(e) => setSection(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer"
-                >
-                  {GF_SECTIONS.map((sec) => (
-                    <option key={sec} value={sec} className="bg-slate-950">
-                      {sec}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-slate-300">
+                    SECTION <span className="text-amber-400">*</span>
+                  </label>
+                  {isDriverLocked && (
+                    <span className="text-[10px] text-amber-400 font-medium flex items-center gap-1">
+                      <Lock className="w-3 h-3" />
+                      Sesuai Dept. User
+                    </span>
+                  )}
+                </div>
+                <div className="relative">
+                  {isDriverLocked && (
+                    <Lock className="w-4 h-4 text-amber-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  )}
+                  <select
+                    value={section}
+                    onChange={(e) => setSection(e.target.value)}
+                    disabled={isDriverLocked}
+                    className={`w-full py-2.5 rounded-xl text-xs focus:outline-none transition-all ${
+                      isDriverLocked
+                        ? "pl-10 pr-3.5 bg-slate-900/90 border border-slate-800 text-slate-300 cursor-not-allowed select-none appearance-none"
+                        : "px-3.5 bg-slate-950 border border-slate-800 text-white focus:ring-1 focus:ring-amber-500 cursor-pointer"
+                    }`}
+                  >
+                    {GF_SECTIONS.map((sec) => (
+                      <option key={sec} value={sec} className="bg-slate-950">
+                        {sec}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -2500,7 +2640,7 @@ function P2HFormContent() {
                 P2H Berhasil Disimpan!
               </h3>
               <p className="text-xs text-slate-400">
-                Pemeriksaan harian kendaraan telah tercatat secara resmi pada sistem PT Batara Mining.
+                Pemeriksaan harian kendaraan telah tercatat secara resmi pada sistem PT Batara Dharma Persada.
               </p>
             </div>
 

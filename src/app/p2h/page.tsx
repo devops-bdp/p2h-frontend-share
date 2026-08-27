@@ -42,6 +42,7 @@ interface CategoryCardItem {
   subtitle: string;
   description: string;
   itemsCountText: string;
+  imageSrc: string;
   icon: any;
   colorScheme: {
     border: string;
@@ -66,15 +67,16 @@ const CATEGORY_CARDS: CategoryCardItem[] = [
     description:
       "Pemeriksaan harian kelayakan berkendara kendaraan ringan untuk mobilitas operasional tambang dan jalur hauling.",
     itemsCountText: "20 Item Baku + Ban + Safety Tools + 10 Fit to Work",
+    imageSrc: "/card-category/LVCARD.jpeg",
     icon: Truck,
     colorScheme: {
-      border: "border-sky-500/30 hover:border-sky-400 group-hover:shadow-sky-500/15",
-      bgGradient: "from-sky-500/10 via-slate-900/90 to-slate-950",
-      badgeBg: "bg-sky-500/15 text-sky-300 border-sky-500/30",
-      iconBg: "bg-sky-500/20 text-sky-400 border-sky-500/30",
-      iconColor: "text-sky-400",
+      border: "border-sky-500/40 hover:border-sky-400 group-hover:shadow-sky-500/20",
+      bgGradient: "from-sky-600/30 via-slate-900/50 to-slate-950/90",
+      badgeBg: "bg-sky-500/25 text-sky-200 border-sky-400/40 shadow-sm",
+      iconBg: "bg-sky-500/25 text-sky-300 border-sky-400/40 shadow-md",
+      iconColor: "text-sky-300",
       btnGradient: "from-sky-400 to-blue-500 hover:from-sky-300 hover:to-blue-400 text-slate-950",
-      glow: "hover:shadow-sky-500/10",
+      glow: "hover:shadow-sky-500/20",
     },
     features: [
       "20 Item General Check (Lampu, Rem, Oli, Radiator, Wiper)",
@@ -93,15 +95,16 @@ const CATEGORY_CARDS: CategoryCardItem[] = [
     description:
       "Pemeriksaan mekanik spesifik boom hidrolik, attachment fork, ban underbody, dan pengujian gerak manuver telehandler.",
     itemsCountText: "35 Item Baku (7 Kategori Inspeksi) + Hour Meter",
+    imageSrc: "/card-category/THCARD.jpeg",
     icon: Wrench,
     colorScheme: {
-      border: "border-amber-500/30 hover:border-amber-400 group-hover:shadow-amber-500/15",
-      bgGradient: "from-amber-500/10 via-slate-900/90 to-slate-950",
-      badgeBg: "bg-amber-500/15 text-amber-300 border-amber-500/30",
-      iconBg: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-      iconColor: "text-amber-400",
+      border: "border-amber-500/40 hover:border-amber-400 group-hover:shadow-amber-500/20",
+      bgGradient: "from-amber-600/30 via-slate-900/50 to-slate-950/90",
+      badgeBg: "bg-amber-500/25 text-amber-200 border-amber-400/40 shadow-sm",
+      iconBg: "bg-amber-500/25 text-amber-300 border-amber-400/40 shadow-md",
+      iconColor: "text-amber-300",
       btnGradient: "from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950",
-      glow: "hover:shadow-amber-500/10",
+      glow: "hover:shadow-amber-500/20",
     },
     features: [
       "Pemeriksaan Fisik Luar & Body Panel",
@@ -120,15 +123,16 @@ const CATEGORY_CARDS: CategoryCardItem[] = [
     description:
       "Pemeriksaan terpadu 3 sub-sistem utama: Kendaraan Truk Sasis, Kompresor Udara Diesel, dan Hydraulic Tyre Lifter.",
     itemsCountText: "37 Item Baku (3 Modul Mesin) + 5 Fit to Work",
+    imageSrc: "/card-category/WTCARD.png",
     icon: Truck,
     colorScheme: {
-      border: "border-emerald-500/30 hover:border-emerald-400 group-hover:shadow-emerald-500/15",
-      bgGradient: "from-emerald-500/10 via-slate-900/90 to-slate-950",
-      badgeBg: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
-      iconBg: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-      iconColor: "text-emerald-400",
+      border: "border-emerald-500/40 hover:border-emerald-400 group-hover:shadow-emerald-500/20",
+      bgGradient: "from-emerald-600/30 via-slate-900/50 to-slate-950/90",
+      badgeBg: "bg-emerald-500/25 text-emerald-200 border-emerald-400/40 shadow-sm",
+      iconBg: "bg-emerald-500/25 text-emerald-300 border-emerald-400/40 shadow-md",
+      iconColor: "text-emerald-300",
       btnGradient: "from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 text-slate-950",
-      glow: "hover:shadow-emerald-500/10",
+      glow: "hover:shadow-emerald-500/20",
     },
     features: [
       "Pemeriksaan Kendaraan Truk (Rem, Kemudi, Mesin, Oli)",
@@ -147,15 +151,16 @@ const CATEGORY_CARDS: CategoryCardItem[] = [
     description:
       "Pemeriksaan spesifik kelayakan tangki solar, pompa discharge, selang nozzle, grounding kabel & standar keselamatan masuk tambang.",
     itemsCountText: "26 Item Baku (3 Kategori) + Catatan Temuan Tangki",
+    imageSrc: "/card-category/FTCARD.png",
     icon: Droplets,
     colorScheme: {
-      border: "border-cyan-500/30 hover:border-cyan-400 group-hover:shadow-cyan-500/15",
-      bgGradient: "from-cyan-500/10 via-slate-900/90 to-slate-950",
-      badgeBg: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
-      iconBg: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
-      iconColor: "text-cyan-400",
+      border: "border-cyan-500/40 hover:border-cyan-400 group-hover:shadow-cyan-500/20",
+      bgGradient: "from-cyan-600/30 via-slate-900/50 to-slate-950/90",
+      badgeBg: "bg-cyan-500/25 text-cyan-200 border-cyan-400/40 shadow-sm",
+      iconBg: "bg-cyan-500/25 text-cyan-300 border-cyan-400/40 shadow-md",
+      iconColor: "text-cyan-300",
       btnGradient: "from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950",
-      glow: "hover:shadow-cyan-500/10",
+      glow: "hover:shadow-cyan-500/20",
     },
     features: [
       "Pemeriksaan General (Rem, Kemudi, Lampu & Wiper)",
@@ -174,15 +179,16 @@ const CATEGORY_CARDS: CategoryCardItem[] = [
     description:
       "Pemeriksaan komprehensif 30 item baku: mesin diesel, radiator pendingin, tangki solar harian, dan instrumen panel generator AC.",
     itemsCountText: "30 Item Baku (3 Modul Panel) + Hour Meter",
+    imageSrc: "/card-category/GSCARD.png",
     icon: Zap,
     colorScheme: {
-      border: "border-yellow-500/30 hover:border-yellow-400 group-hover:shadow-yellow-500/15",
-      bgGradient: "from-yellow-500/10 via-slate-900/90 to-slate-950",
-      badgeBg: "bg-yellow-500/15 text-yellow-300 border-yellow-500/30",
-      iconBg: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-      iconColor: "text-yellow-400",
+      border: "border-yellow-500/40 hover:border-yellow-400 group-hover:shadow-yellow-500/20",
+      bgGradient: "from-yellow-600/30 via-slate-900/50 to-slate-950/90",
+      badgeBg: "bg-yellow-500/25 text-yellow-200 border-yellow-400/40 shadow-sm",
+      iconBg: "bg-yellow-500/25 text-yellow-300 border-yellow-400/40 shadow-md",
+      iconColor: "text-yellow-300",
       btnGradient: "from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-slate-950",
-      glow: "hover:shadow-yellow-500/10",
+      glow: "hover:shadow-yellow-500/20",
     },
     features: [
       "Pemeriksaan Mesin (Oli, Baterai, Filter, Air Radiator)",
@@ -201,15 +207,16 @@ const CATEGORY_CARDS: CategoryCardItem[] = [
     description:
       "Pemeriksaan harian kompresor udara diesel & listrik: tangki angin, valve safety, belt, saklar kelistrikan, dan indikator pressure gauge.",
     itemsCountText: "10 Item (Diesel) / 9 Item (Listrik) + Hour Meter",
+    imageSrc: "/card-category/COMPRESSOR-CARD.png",
     icon: Wind,
     colorScheme: {
-      border: "border-teal-500/30 hover:border-teal-400 group-hover:shadow-teal-500/15",
-      bgGradient: "from-teal-500/10 via-slate-900/90 to-slate-950",
-      badgeBg: "bg-teal-500/15 text-teal-300 border-teal-500/30",
-      iconBg: "bg-teal-500/20 text-teal-400 border-teal-500/30",
-      iconColor: "text-teal-400",
+      border: "border-teal-500/40 hover:border-teal-400 group-hover:shadow-teal-500/20",
+      bgGradient: "from-teal-600/30 via-slate-900/50 to-slate-950/90",
+      badgeBg: "bg-teal-500/25 text-teal-200 border-teal-400/40 shadow-sm",
+      iconBg: "bg-teal-500/25 text-teal-300 border-teal-400/40 shadow-md",
+      iconColor: "text-teal-300",
       btnGradient: "from-teal-400 to-emerald-500 hover:from-teal-300 hover:to-emerald-400 text-slate-950",
-      glow: "hover:shadow-teal-500/10",
+      glow: "hover:shadow-teal-500/20",
     },
     features: [
       "Level & Kebocoran Oli Mesin (Khusus Diesel)",
@@ -351,73 +358,83 @@ export default function P2HCategorySelectionPage() {
             return (
               <div
                 key={card.id}
-                className={`group relative rounded-3xl bg-linear-to-b ${card.colorScheme.bgGradient} border ${card.colorScheme.border} p-6 flex flex-col justify-between space-y-5 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl ${card.colorScheme.glow}`}
+                className={`group relative rounded-3xl overflow-hidden border ${card.colorScheme.border} p-6 flex flex-col justify-between space-y-5 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl ${card.colorScheme.glow}`}
               >
+                {/* Background Photo with subtle zoom on hover */}
+                <div
+                  className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-700 group-hover:scale-105"
+                  style={{ backgroundImage: `url('${card.imageSrc}')` }}
+                />
+
+                {/* Bright & Balanced Gradient Overlays for High Photo Visibility & Readability */}
+                <div className={`absolute inset-0 bg-linear-to-b ${card.colorScheme.bgGradient} opacity-40 group-hover:opacity-30 transition-opacity`} />
+                <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/40 to-slate-950/15" />
+
                 {/* Top Row: Icon + Badge + Code */}
-                <div className="flex items-start justify-between gap-3">
+                <div className="relative z-10 flex items-start justify-between gap-3">
                   <div
-                    className={`w-13 h-13 rounded-2xl ${card.colorScheme.iconBg} flex items-center justify-center border shadow-inner group-hover:scale-105 transition-transform`}
+                    className={`w-12 h-12 rounded-2xl ${card.colorScheme.iconBg} flex items-center justify-center border shadow-lg backdrop-blur-md group-hover:scale-105 transition-transform`}
                   >
-                    <Icon className="w-6 h-6" />
+                    <Icon className="w-5 h-5" />
                   </div>
 
                   <div className="flex flex-col items-end gap-1">
                     <span
-                      className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${card.colorScheme.badgeBg}`}
+                      className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border backdrop-blur-md ${card.colorScheme.badgeBg}`}
                     >
                       {card.badge}
                     </span>
-                    <span className="text-[10px] font-mono text-slate-500 font-bold">
+                    <span className="text-[10px] font-mono text-slate-200 font-bold bg-slate-950/80 px-2 py-0.5 rounded-md border border-slate-700/80 backdrop-blur-md">
                       {card.code}
                     </span>
                   </div>
                 </div>
 
                 {/* Title & Description */}
-                <div className="space-y-2">
+                <div className="relative z-10 space-y-1.5 pt-2">
                   <div className="flex items-baseline justify-between gap-2">
-                    <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">
+                    <h2 className="text-lg sm:text-xl font-black text-white tracking-tight drop-shadow-md">
                       {card.title}
                     </h2>
                     {count !== null && (
-                      <span className="text-[11px] font-bold text-slate-300 bg-slate-950/80 px-2 py-0.5 rounded-lg border border-slate-800">
+                      <span className="text-[11px] font-bold text-slate-200 bg-slate-950/90 px-2.5 py-0.5 rounded-lg border border-slate-700/80 backdrop-blur-md shadow-md">
                         {count} Unit
                       </span>
                     )}
                   </div>
 
-                  <p className="text-xs font-semibold text-slate-300">
+                  <p className="text-xs font-bold text-amber-300 drop-shadow-sm">
                     {card.subtitle}
                   </p>
 
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs text-slate-200 leading-relaxed drop-shadow-md">
                     {card.description}
                   </p>
                 </div>
 
-                {/* Features List */}
-                <div className="space-y-2 pt-3 border-t border-slate-800/80">
-                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300">
+                {/* Features List with Translucent Dark Backdrop */}
+                <div className="relative z-10 space-y-2 p-3 rounded-2xl bg-slate-950/70 border border-slate-800/80 backdrop-blur-md shadow-lg">
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-200">
                     <ListChecks className="w-3.5 h-3.5 text-amber-400" />
                     <span>Cakupan Pemeriksaan:</span>
                   </div>
 
-                  <ul className="space-y-1.5 text-[11px] text-slate-400">
+                  <ul className="space-y-1.5 text-[11px] text-slate-300">
                     {card.features.map((feat, fIdx) => (
                       <li key={fIdx} className="flex items-start gap-2">
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                        <span className="line-clamp-1">{feat}</span>
+                        <span className="line-clamp-1 drop-shadow-xs">{feat}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
                 {/* Action CTA Button */}
-                <div className="pt-2">
+                <div className="relative z-10 pt-1">
                   <button
                     type="button"
                     onClick={() => handleCardClick(card)}
-                    className={`w-full py-3.5 px-4 rounded-2xl bg-linear-to-r ${card.colorScheme.btnGradient} font-black text-xs flex items-center justify-center gap-2 shadow-lg transition-all group-hover:scale-[1.02] cursor-pointer`}
+                    className={`w-full py-3.5 px-4 rounded-2xl bg-linear-to-r ${card.colorScheme.btnGradient} font-black text-xs flex items-center justify-center gap-2 shadow-xl transition-all group-hover:scale-[1.02] cursor-pointer`}
                   >
                     <KeyRound className="w-4 h-4" />
                     <span>Akses Form {card.title.split(" ")[0]}</span>
@@ -525,7 +542,7 @@ export default function P2HCategorySelectionPage() {
         <div className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800 space-y-3 text-xs text-slate-400 shadow-lg">
           <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
             <ShieldCheck className="w-5 h-5" />
-            <span>Standar Keselamatan &amp; Operasional P2H PT Batara Mining</span>
+            <span>Standar Keselamatan &amp; Operasional P2H PT Batara Dharma Persada</span>
           </div>
           <p className="leading-relaxed">
             Pemeriksaan Harian (P2H) wajib dilakukan oleh setiap operator/driver sebelum mengoperasikan unit armada pada setiap awal shift kerja. Pastikan kondisi unit dalam keadaan aman dan layak beroperasi sesuai standar keselamatan kerja pertambangan.
@@ -536,7 +553,7 @@ export default function P2HCategorySelectionPage() {
       {/* ================= FOOTER ================= */}
       <footer className="border-t border-slate-800/80 bg-slate-950/60 py-6 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>&copy; {new Date().getFullYear()} PT Batara Mining. All Rights Reserved.</span>
+          <span>&copy; {new Date().getFullYear()} PT Batara Dharma Persada. All Rights Reserved.</span>
           <span className="text-slate-400 font-medium">Sistem Manajemen Pemeriksaan Harian (P2H)</span>
         </div>
       </footer>

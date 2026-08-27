@@ -649,12 +649,34 @@ export default function CreateP2HPage() {
       return;
     }
 
+    // Validasi Angka KM tidak boleh kurang dari KM unit saat ini
+    if (!isGenset && !isCompressor && km !== "" && selectedUnit?.km != null && selectedUnit.km > 0) {
+      if (Number(km) < selectedUnit.km) {
+        showAlertWarning(
+          "Validasi KM Tidak Valid",
+          `Angka KM (${km}) tidak boleh lebih rendah dari KM unit saat ini (${selectedUnit.km} KM). Silakan masukkan angka KM aktual yang sama atau lebih besar.`
+        );
+        return;
+      }
+    }
+
     if ((isTelehandler || isGenset || isCompressor) && (hourMeter === "" || Number(hourMeter) < 0)) {
       showAlertWarning(
         "Hour Meter (HM) Wajib Diisi",
         `Hour Meter (HM) Unit ${isGenset ? "Genset" : isCompressor ? "Kompresor" : "Telehandler"} wajib diisi.`
       );
       return;
+    }
+
+    // Validasi Angka HM tidak boleh kurang dari HM unit saat ini
+    if (hourMeter !== "" && selectedUnit?.hourMeter != null && selectedUnit.hourMeter > 0) {
+      if (Number(hourMeter) < selectedUnit.hourMeter) {
+        showAlertWarning(
+          "Validasi HM Tidak Valid",
+          `Angka Hour Meter / HM (${hourMeter}) tidak boleh lebih rendah dari HM unit saat ini (${selectedUnit.hourMeter} HM). Silakan masukkan angka HM aktual yang sama atau lebih besar.`
+        );
+        return;
+      }
     }
 
     if (!driverValidation) {
@@ -667,7 +689,7 @@ export default function CreateP2HPage() {
 
     const isConfirmed = await showConfirmDialog({
       title: "Simpan Inspeksi P2H?",
-      text: "Data pemeriksaan harian ini akan disimpan ke database pusat PT Batara Mining.",
+      text: "Data pemeriksaan harian ini akan disimpan ke database pusat PT Batara Dharma Persada.",
       confirmButtonText: "Ya, Simpan",
     });
     if (!isConfirmed) return;
@@ -748,7 +770,7 @@ export default function CreateP2HPage() {
             </h1>
           </div>
           <p className="text-xs text-slate-400">
-            Formulir standar operasional pemeriksaan harian armada Light Vehicle &amp; unit site PT Batara Mining.
+            Formulir standar operasional pemeriksaan harian armada Light Vehicle &amp; unit site PT Batara Dharma Persada.
           </p>
         </div>
 
@@ -1074,46 +1096,88 @@ export default function CreateP2HPage() {
 
             {/* Hour Meter (HM) */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                Hour Meter (HM) {(isTelehandler || isGenset || isCompressor) && <span className="text-amber-400">*</span>}
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Hour Meter (HM) {(isTelehandler || isGenset || isCompressor) && <span className="text-amber-400">*</span>}
+                </label>
+                {selectedUnit?.hourMeter != null && selectedUnit.hourMeter > 0 && (
+                  <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                    HM Terakhir: <strong>{selectedUnit.hourMeter}</strong>
+                  </span>
+                )}
+              </div>
               <div className="relative">
                 <Clock className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="number"
-                  min="0"
+                  min={selectedUnit?.hourMeter != null ? selectedUnit.hourMeter : 0}
                   step="0.1"
                   required={isTelehandler || isGenset || isCompressor}
                   value={hourMeter}
                   onChange={(e) => setHourMeter(e.target.value === "" ? "" : Number(e.target.value))}
-                  placeholder={isTelehandler || isGenset || isCompressor ? "Wajib diisi (Contoh: 340.5)" : "Opsional (Contoh: 120)"}
-                  className={`w-full pl-9 pr-3.5 py-2.5 bg-slate-950 border rounded-xl text-xs focus:outline-none ${
-                    isTelehandler || isGenset || isCompressor
+                  placeholder={
+                    selectedUnit?.hourMeter != null
+                      ? `Min. ${selectedUnit.hourMeter} (Contoh: ${selectedUnit.hourMeter + 5})`
+                      : isTelehandler || isGenset || isCompressor
+                      ? "Wajib diisi (Contoh: 340.5)"
+                      : "Opsional (Contoh: 120)"
+                  }
+                  className={`w-full pl-9 pr-3.5 py-2.5 bg-slate-950 border rounded-xl text-xs focus:outline-none transition-all ${
+                    hourMeter !== "" && selectedUnit?.hourMeter != null && Number(hourMeter) < selectedUnit.hourMeter
+                      ? "border-rose-500 text-rose-300 focus:ring-1 focus:ring-rose-500 bg-rose-950/20"
+                      : isTelehandler || isGenset || isCompressor
                       ? "border-amber-500/50 focus:ring-1 focus:ring-amber-500 bg-amber-500/5"
                       : "border-slate-800 focus:ring-1 focus:ring-amber-500"
                   }`}
                 />
               </div>
+              {hourMeter !== "" && selectedUnit?.hourMeter != null && Number(hourMeter) < selectedUnit.hourMeter && (
+                <p className="text-[11px] text-rose-400 flex items-center gap-1 font-medium pt-0.5 animate-in fade-in">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  <span>HM tidak boleh kurang dari HM sebelumnya ({selectedUnit.hourMeter} HM).</span>
+                </p>
+              )}
             </div>
 
             {/* KM UNIT (Khusus unit bergerak) */}
             {!isGenset && !isCompressor && (
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-300">
-                  KM UNIT <span className="text-amber-400">*</span>
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-slate-300">
+                    KM UNIT <span className="text-amber-400">*</span>
+                  </label>
+                  {selectedUnit?.km != null && selectedUnit.km > 0 && (
+                    <span className="text-[10px] font-mono text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                      KM Terakhir: <strong>{selectedUnit.km}</strong>
+                    </span>
+                  )}
+                </div>
                 <div className="relative">
                   <Gauge className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="number"
-                    min="0"
+                    min={selectedUnit?.km != null ? selectedUnit.km : 0}
                     required={!isGenset && !isCompressor}
                     value={km}
                     onChange={(e) => setKm(e.target.value === "" ? "" : Number(e.target.value))}
-                    placeholder="Contoh: 45200"
-                    className="w-full pl-9 pr-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    placeholder={
+                      selectedUnit?.km != null
+                        ? `Min. ${selectedUnit.km} (Contoh: ${selectedUnit.km + 20})`
+                        : "Contoh: 45200"
+                    }
+                    className={`w-full pl-9 pr-3.5 py-2.5 bg-slate-950 border rounded-xl text-xs focus:outline-none transition-all ${
+                      km !== "" && selectedUnit?.km != null && Number(km) < selectedUnit.km
+                        ? "border-rose-500 text-rose-300 focus:ring-1 focus:ring-rose-500 bg-rose-950/20"
+                        : "border-slate-800 focus:ring-1 focus:ring-amber-500"
+                    }`}
                   />
                 </div>
+                {km !== "" && selectedUnit?.km != null && Number(km) < selectedUnit.km && (
+                  <p className="text-[11px] text-rose-400 flex items-center gap-1 font-medium pt-0.5 animate-in fade-in">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    <span>KM tidak boleh kurang dari KM sebelumnya ({selectedUnit.km} KM).</span>
+                  </p>
+                )}
               </div>
             )}
           </div>

@@ -65,6 +65,7 @@ import {
   showToast,
 } from "@/lib/swal";
 import { getAuthSession } from "@/services/auth.service";
+import Pagination from "@/components/Pagination";
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -73,6 +74,10 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState("");
   const [deptFilter, setDeptFilter] = useState("");
   const [posFilter, setPosFilter] = useState("");
+
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   // Alert State
   const [alert, setAlert] = useState<{
@@ -144,6 +149,7 @@ export default function UsersPage() {
         posision: posFilter || undefined,
       });
       setUsers(res.data || []);
+      setPage(1);
     } catch (error: any) {
       setAlert({
         type: "error",
@@ -158,6 +164,23 @@ export default function UsersPage() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     loadUsers();
+  };
+
+  // Paginated User Slice
+  const paginatedUsers = useMemo(() => {
+    const start = (page - 1) * limit;
+    return users.slice(start, start + limit);
+  }, [users, page, limit]);
+
+  const totalPages = Math.ceil(users.length / limit) || 1;
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setLimit(newSize);
+    setPage(1);
   };
 
   const handleResetFilters = () => {
@@ -773,7 +796,7 @@ export default function UsersPage() {
                   </td>
                 </tr>
               ) : (
-                users.map((user) => (
+                paginatedUsers.map((user) => (
                   <tr
                     key={user.id}
                     className="hover:bg-slate-850/40 transition-colors group"
@@ -903,13 +926,18 @@ export default function UsersPage() {
             </tbody>
           </table>
         </div>
-
-        {/* Footer info */}
-        <div className="p-4 border-t border-slate-800/80 bg-slate-950/40 flex items-center justify-between text-xs text-slate-400">
-          <span>Menampilkan <strong className="text-white">{users.length}</strong> pengguna</span>
-          <span>Sistem Otorisasi Multi-Role Batara P2H</span>
-        </div>
       </div>
+
+      {/* ================= PAGINATION ================= */}
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        totalItems={users.length}
+        pageSize={limit}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+        isLoading={isLoading}
+      />
 
       {/* ========================================================================= */}
       {/* MODAL: BULK CREATE / IMPOR MASSAL USER */}

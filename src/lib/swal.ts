@@ -1,6 +1,6 @@
 import Swal, { SweetAlertOptions } from "sweetalert2";
 
-// Custom Batara Mining Dark Theme SweetAlert instance
+// Custom Batara Dharma Persada Dark Theme SweetAlert instance
 export const BataraSwal = Swal.mixin({
   background: "#090d16",
   color: "#f8fafc",
