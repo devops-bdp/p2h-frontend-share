@@ -17,6 +17,8 @@ import {
   Clock,
   ShieldAlert,
   Building2,
+  Download,
+  FileSpreadsheet,
 } from "lucide-react";
 import {
   Unit,
@@ -35,23 +37,26 @@ import {
 } from "@/lib/swal";
 import { getAuthSession } from "@/services/auth.service";
 import Pagination from "@/components/Pagination";
+import { exportUnitsToExcel } from "@/lib/excel-export";
 
 const CATEGORIES = [
+  { value: "LIGHT_VECHICLE", label: "Light Vehicle (LV)" },
+  { value: "TELEHENDLER", label: "Telehandler" },
+  { value: "STORING_TRUCK", label: "Storing Truck" },
+  { value: "FUEL_TRUCK", label: "Fuel Truck" },
+  { value: "GENSET", label: "Genset" },
+  { value: "COMPRESSOR", label: "Compressor" },
   { value: "EXCAVATOR", label: "Excavator" },
   { value: "DOZER", label: "Dozer" },
   { value: "COMPACTOR", label: "Compactor" },
-  { value: "COMPRESSOR", label: "Compressor" },
-  { value: "FUEL_TRUCK", label: "Fuel Truck" },
-  { value: "LIGHT_VECHICLE", label: "Light Vehicle (LV)" },
   { value: "CRANE_TRUCK", label: "Crane Truck" },
   { value: "MOBILE_CRANE", label: "Mobile Crane" },
   { value: "AMBULANCE", label: "Ambulance" },
-  { value: "STORING_TRUCK", label: "Storing Truck" },
-  { value: "TELEHENDLER", label: "Telehandler" },
 ];
 
 export default function UnitsPage() {
   const [units, setUnits] = useState<Unit[]>([]);
+  const [allUnits, setAllUnits] = useState<Unit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -81,7 +86,7 @@ export default function UnitsPage() {
   // Form State
   const [formData, setFormData] = useState<UnitInput>({
     unitNo: "",
-    category: "EXCAVATOR",
+    category: "LIGHT_VECHICLE",
     brand: "",
     description: "",
     ownerName: "",
@@ -93,18 +98,27 @@ export default function UnitsPage() {
   useEffect(() => {
     const session = getAuthSession();
     setCurrentUser(session.user);
-    loadUnits();
+    loadUnits("", "", "");
   }, []);
 
-  const loadUnits = async () => {
+  const loadUnits = async (
+    targetCategory = categoryFilter,
+    targetStatus = statusFilter,
+    targetSearch = search
+  ) => {
     setIsLoading(true);
     try {
       const res = await fetchUnits({
-        search: search.trim() || undefined,
-        category: categoryFilter || undefined,
-        status: statusFilter || undefined,
+        search: targetSearch.trim() || undefined,
+        category: targetCategory || undefined,
+        status: targetStatus || undefined,
       });
       setUnits(res.data || []);
+
+      // Simpan semua unit saat query awal tanpa filter untuk statistik pill counts
+      if (!targetCategory && !targetStatus && !targetSearch.trim()) {
+        setAllUnits(res.data || []);
+      }
       setPage(1);
     } catch (error: any) {
       setAlert({
@@ -117,9 +131,54 @@ export default function UnitsPage() {
     }
   };
 
+  const handleCategoryChange = (newCategory: string) => {
+    setCategoryFilter(newCategory);
+    loadUnits(newCategory, statusFilter, search);
+  };
+
+  const handleStatusChange = (newStatus: string) => {
+    setStatusFilter(newStatus);
+    loadUnits(categoryFilter, newStatus, search);
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    loadUnits();
+    loadUnits(categoryFilter, statusFilter, search);
+  };
+
+  const handleResetFilters = () => {
+    setSearch("");
+    setCategoryFilter("");
+    setStatusFilter("");
+    loadUnits("", "", "");
+  };
+
+  // Category counts based on all registered units
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const dataset = allUnits.length > 0 ? allUnits : units;
+    dataset.forEach((u) => {
+      counts[u.category] = (counts[u.category] || 0) + 1;
+    });
+    return counts;
+  }, [allUnits, units]);
+
+  // Export to Excel (.xlsx) function
+  const handleExportExcel = async () => {
+    if (units.length === 0) {
+      showAlertWarning("Data Kosong", "Tidak ada data armada unit yang dapat diekspor.");
+      return;
+    }
+
+    try {
+      await exportUnitsToExcel(units, {
+        category: categoryFilter,
+        status: statusFilter,
+      });
+      showToast(`Berhasil mengunduh ${units.length} data unit ke Excel (.xlsx)`, "success");
+    } catch (error: any) {
+      showAlertError("Gagal Mengunduh Excel", error.message || "Terjadi kesalahan saat mengunduh file.");
+    }
   };
 
   // Paginated data slice
@@ -308,13 +367,27 @@ export default function UnitsPage() {
           </p>
         </div>
 
-        <button
-          onClick={handleOpenCreate}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-linear-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-amber-500/20 transition-all active:scale-95"
-        >
-          <Plus className="w-4 h-4" strokeWidth={2.5} />
-          <span>Tambah Unit Baru</span>
-        </button>
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full sm:w-auto">
+          {/* Download Excel Button */}
+          <button
+            onClick={handleExportExcel}
+            disabled={isLoading || units.length === 0}
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/60 font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Download Data Armada Unit ke File Excel (.CSV)"
+          >
+            <Download className="w-4 h-4 text-emerald-400" />
+            <span>Download Excel</span>
+          </button>
+
+          {/* Create Unit Button */}
+          <button
+            onClick={handleOpenCreate}
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-linear-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-amber-500/20 transition-all active:scale-95 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" strokeWidth={2.5} />
+            <span>Tambah Unit Baru</span>
+          </button>
+        </div>
       </div>
 
       {/* ================= STATS CARDS ================= */}
@@ -370,7 +443,7 @@ export default function UnitsPage() {
           </div>
           <button
             onClick={() => setAlert(null)}
-            className="text-slate-400 hover:text-white p-1"
+            className="text-slate-400 hover:text-white p-1 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -408,23 +481,23 @@ export default function UnitsPage() {
           </div>
 
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full md:w-auto">
-            {/* Category Filter */}
-            <div className="flex-1 sm:flex-initial flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 sm:py-1.5 min-w-35">
+            {/* Category Dropdown Filter */}
+            <div className="flex-1 sm:flex-initial flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 sm:py-1.5 min-w-40">
               <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <select
                 value={categoryFilter}
-                onChange={(e) => {
-                  setCategoryFilter(e.target.value);
-                  setTimeout(loadUnits, 50);
-                }}
+                onChange={(e) => handleCategoryChange(e.target.value)}
                 className="w-full bg-transparent text-xs text-slate-200 focus:outline-none cursor-pointer"
               >
-                <option value="" className="bg-slate-950">Semua Kategori</option>
-                {CATEGORIES.map((cat) => (
-                  <option key={cat.value} value={cat.value} className="bg-slate-950">
-                    {cat.label}
-                  </option>
-                ))}
+                <option value="" className="bg-slate-950">Semua Kategori ({allUnits.length || units.length})</option>
+                {CATEGORIES.map((cat) => {
+                  const count = categoryCounts[cat.value];
+                  return (
+                    <option key={cat.value} value={cat.value} className="bg-slate-950">
+                      {cat.label} {count ? `(${count})` : ''}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
@@ -432,10 +505,7 @@ export default function UnitsPage() {
             <div className="flex-1 sm:flex-initial bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 sm:py-1.5 min-w-30">
               <select
                 value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setTimeout(loadUnits, 50);
-                }}
+                onChange={(e) => handleStatusChange(e.target.value)}
                 className="w-full bg-transparent text-xs text-slate-200 focus:outline-none cursor-pointer"
               >
                 <option value="" className="bg-slate-950">Semua Status</option>
@@ -444,18 +514,78 @@ export default function UnitsPage() {
               </select>
             </div>
 
+            {/* Reset Filter Button */}
+            {(categoryFilter || statusFilter || search) && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="px-3 py-2 sm:py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 hover:bg-rose-500/20 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Reset Filter"
+              >
+                <X className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Reset</span>
+              </button>
+            )}
+
             {/* Refresh Button */}
             <button
               type="button"
-              onClick={loadUnits}
+              onClick={() => loadUnits(categoryFilter, statusFilter, search)}
               disabled={isLoading}
-              className="p-2.5 sm:p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-2.5 sm:p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
               title="Segarkan Data"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-amber-400" : ""}`} />
             </button>
           </div>
         </form>
+
+        {/* Quick Category Chips / Pills */}
+        <div className="pt-2.5 border-t border-slate-800/70 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-700">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 shrink-0">
+            Kategori:
+          </span>
+          <button
+            type="button"
+            onClick={() => handleCategoryChange("")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              categoryFilter === ""
+                ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-bold"
+                : "bg-slate-950/80 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700"
+            }`}
+          >
+            Semua ({allUnits.length || units.length})
+          </button>
+          {CATEGORIES.map((cat) => {
+            const count = categoryCounts[cat.value] || 0;
+            const isActive = categoryFilter === cat.value;
+            return (
+              <button
+                key={cat.value}
+                type="button"
+                onClick={() => handleCategoryChange(cat.value)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                  isActive
+                    ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-bold"
+                    : "bg-slate-950/80 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700"
+                }`}
+              >
+                <span>{cat.label}</span>
+                {count > 0 && (
+                  <span
+                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                      isActive
+                        ? "bg-slate-950/20 text-slate-950"
+                        : "bg-slate-800 text-slate-300"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* ================= DESKTOP TABLE VIEW (md:block) ================= */}

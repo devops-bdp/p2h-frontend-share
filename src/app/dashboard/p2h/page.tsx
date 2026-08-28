@@ -4,7 +4,6 @@ import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import {
   ClipboardCheck,
-  Plus,
   Search,
   Filter,
   RefreshCw,
@@ -32,7 +31,11 @@ import {
   Droplets,
   Zap,
   Wind,
+  Download,
+  Printer,
 } from "lucide-react";
+import { generateAndPrintP2HPdf } from "@/lib/p2h-pdf";
+import { exportP2HToExcel } from "@/lib/excel-export";
 import {
   fetchP2HInspections,
   fetchP2HStats,
@@ -57,6 +60,21 @@ import {
 import { getAuthSession } from "@/services/auth.service";
 import Pagination from "@/components/Pagination";
 
+const CATEGORIES = [
+  { value: "LIGHT_VECHICLE", label: "Light Vehicle (LV)" },
+  { value: "TELEHENDLER", label: "Telehandler" },
+  { value: "STORING_TRUCK", label: "Storing Truck" },
+  { value: "FUEL_TRUCK", label: "Fuel Truck" },
+  { value: "GENSET", label: "Genset" },
+  { value: "COMPRESSOR", label: "Compressor" },
+  { value: "EXCAVATOR", label: "Excavator" },
+  { value: "DOZER", label: "Dozer" },
+  { value: "COMPACTOR", label: "Compactor" },
+  { value: "CRANE_TRUCK", label: "Crane Truck" },
+  { value: "MOBILE_CRANE", label: "Mobile Crane" },
+  { value: "AMBULANCE", label: "Ambulance" },
+];
+
 export default function P2HListPage() {
   const [inspections, setInspections] = useState<P2HInspection[]>([]);
   const [stats, setStats] = useState<{
@@ -67,7 +85,9 @@ export default function P2HListPage() {
   }>({ totalAll: 0, totalToday: 0, readyCount: 0, notReadyCount: 0 });
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [shiftFilter, setShiftFilter] = useState("");
   const [sectionFilter, setSectionFilter] = useState("");
   const [unitStatusFilter, setUnitStatusFilter] = useState("");
@@ -105,19 +125,29 @@ export default function P2HListPage() {
   useEffect(() => {
     const session = getAuthSession();
     setUser(session.user);
-    loadData(1, limit);
+    loadData(1, limit, "", "", "", "", "", "");
   }, []);
 
-  const loadData = async (pageToLoad = page, limitToLoad = limit) => {
+  const loadData = async (
+    pageToLoad = page,
+    limitToLoad = limit,
+    targetCategory = categoryFilter,
+    targetShift = shiftFilter,
+    targetSection = sectionFilter,
+    targetUnitStatus = unitStatusFilter,
+    targetDriverStatus = driverStatusFilter,
+    targetSearch = search
+  ) => {
     setIsLoading(true);
     try {
       const [listRes, statsRes] = await Promise.all([
         fetchP2HInspections({
-          search: search.trim() || undefined,
-          shift: shiftFilter || undefined,
-          section: sectionFilter || undefined,
-          unitStatus: unitStatusFilter || undefined,
-          driverStatus: driverStatusFilter || undefined,
+          search: targetSearch.trim() || undefined,
+          category: targetCategory || undefined,
+          shift: targetShift || undefined,
+          section: targetSection || undefined,
+          unitStatus: targetUnitStatus || undefined,
+          driverStatus: targetDriverStatus || undefined,
           page: pageToLoad,
           limit: limitToLoad,
         }),
@@ -145,10 +175,82 @@ export default function P2HListPage() {
     }
   };
 
+  const handleCategoryChange = (newCat: string) => {
+    setCategoryFilter(newCat);
+    setPage(1);
+    loadData(1, limit, newCat, shiftFilter, sectionFilter, unitStatusFilter, driverStatusFilter, search);
+  };
+
+  const handleShiftChange = (newShift: string) => {
+    setShiftFilter(newShift);
+    setPage(1);
+    loadData(1, limit, categoryFilter, newShift, sectionFilter, unitStatusFilter, driverStatusFilter, search);
+  };
+
+  const handleSectionChange = (newSec: string) => {
+    setSectionFilter(newSec);
+    setPage(1);
+    loadData(1, limit, categoryFilter, shiftFilter, newSec, unitStatusFilter, driverStatusFilter, search);
+  };
+
+  const handleUnitStatusChange = (newStat: string) => {
+    setUnitStatusFilter(newStat);
+    setPage(1);
+    loadData(1, limit, categoryFilter, shiftFilter, sectionFilter, newStat, driverStatusFilter, search);
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
-    loadData(1, limit);
+    loadData(1, limit, categoryFilter, shiftFilter, sectionFilter, unitStatusFilter, driverStatusFilter, search);
+  };
+
+  const handleResetFilters = () => {
+    setSearch("");
+    setCategoryFilter("");
+    setShiftFilter("");
+    setSectionFilter("");
+    setUnitStatusFilter("");
+    setDriverStatusFilter("");
+    setPage(1);
+    loadData(1, limit, "", "", "", "", "", "");
+  };
+
+  const handleExportExcel = async () => {
+    setIsExporting(true);
+    try {
+      const res = await fetchP2HInspections({
+        search: search.trim() || undefined,
+        category: categoryFilter || undefined,
+        shift: shiftFilter || undefined,
+        section: sectionFilter || undefined,
+        unitStatus: unitStatusFilter || undefined,
+        driverStatus: driverStatusFilter || undefined,
+        page: 1,
+        limit: 5000,
+      });
+
+      const exportData = res.data || inspections;
+
+      if (!exportData || exportData.length === 0) {
+        showAlertWarning("Data Kosong", "Tidak ada data riwayat P2H yang dapat diekspor.");
+        return;
+      }
+
+      await exportP2HToExcel(exportData, {
+        category: categoryFilter,
+        shift: shiftFilter,
+        section: sectionFilter,
+        unitStatus: unitStatusFilter,
+        search: search,
+      });
+
+      showToast(`Berhasil mengunduh ${exportData.length} data riwayat P2H ke Excel (.xlsx)`, "success");
+    } catch (error: any) {
+      showAlertError("Gagal Mengunduh Excel", error.message || "Terjadi kesalahan saat mengunduh data.");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handlePageChange = (newPage: number) => {
@@ -231,7 +333,7 @@ export default function P2HListPage() {
               Form &amp; Checklist P2H Armada
             </h1>
             <span className="px-2.5 py-0.5 text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg">
-              {inspections.length} Riwayat
+              {pagination.total || inspections.length} Riwayat
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
@@ -239,13 +341,22 @@ export default function P2HListPage() {
           </p>
         </div>
 
-        <Link
-          href="/dashboard/p2h/create"
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-linear-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-amber-500/25 transition-all active:scale-95"
-        >
-          <Plus className="w-4 h-4" strokeWidth={2.5} />
-          <span>Buat Form P2H Baru</span>
-        </Link>
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full sm:w-auto">
+          {/* Download Excel Button */}
+          <button
+            onClick={handleExportExcel}
+            disabled={isLoading || isExporting || inspections.length === 0}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/60 font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Download Riwayat P2H ke File Excel (.CSV)"
+          >
+            {isExporting ? (
+              <Loader2 className="w-4 h-4 text-emerald-400 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4 text-emerald-400" />
+            )}
+            <span>{isExporting ? "Mengunduh..." : "Download Excel"}</span>
+          </button>
+        </div>
       </div>
 
       {/* ================= STATS CARDS ================= */}
@@ -323,7 +434,7 @@ export default function P2HListPage() {
           </div>
           <button
             onClick={() => setAlert(null)}
-            className="text-slate-400 hover:text-white p-1"
+            className="text-slate-400 hover:text-white p-1 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -334,10 +445,10 @@ export default function P2HListPage() {
       <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-3">
         <form
           onSubmit={handleSearchSubmit}
-          className="flex flex-col md:flex-row gap-2.5 sm:gap-3 items-stretch md:items-center justify-between"
+          className="flex flex-col lg:flex-row gap-2.5 sm:gap-3 items-stretch lg:items-center justify-between"
         >
           {/* Search Input */}
-          <div className="relative flex-1 md:max-w-xs">
+          <div className="relative flex-1 lg:max-w-xs">
             <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
@@ -348,31 +459,42 @@ export default function P2HListPage() {
             />
           </div>
 
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full md:w-auto">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full lg:w-auto">
+            {/* Category Filter Dropdown */}
+            <div className="flex-1 sm:flex-initial flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 sm:py-1.5 min-w-35">
+              <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <select
+                value={categoryFilter}
+                onChange={(e) => handleCategoryChange(e.target.value)}
+                className="w-full bg-transparent text-xs text-slate-200 focus:outline-none cursor-pointer"
+              >
+                <option value="" className="bg-slate-950">Semua Kategori</option>
+                {CATEGORIES.map((cat) => (
+                  <option key={cat.value} value={cat.value} className="bg-slate-950">
+                    {cat.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Shift Filter */}
-            <div className="flex-1 sm:flex-initial bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 sm:py-1.5 min-w-30">
+            <div className="flex-1 sm:flex-initial bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 sm:py-1.5 min-w-28">
               <select
                 value={shiftFilter}
-                onChange={(e) => {
-                  setShiftFilter(e.target.value);
-                  setTimeout(loadData, 50);
-                }}
+                onChange={(e) => handleShiftChange(e.target.value)}
                 className="w-full bg-transparent text-xs text-slate-200 focus:outline-none cursor-pointer"
               >
                 <option value="" className="bg-slate-950">Semua Shift</option>
-                <option value="SIANG" className="bg-slate-950">☀️ Day Shift (Siang)</option>
-                <option value="MALAM" className="bg-slate-950">🌙 Night Shift (Malam)</option>
+                <option value="SIANG" className="bg-slate-950">☀️ Day (Siang)</option>
+                <option value="MALAM" className="bg-slate-950">🌙 Night (Malam)</option>
               </select>
             </div>
 
             {/* Section Filter */}
-            <div className="flex-1 sm:flex-initial bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 sm:py-1.5 min-w-30">
+            <div className="flex-1 sm:flex-initial bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 sm:py-1.5 min-w-28">
               <select
                 value={sectionFilter}
-                onChange={(e) => {
-                  setSectionFilter(e.target.value);
-                  setTimeout(loadData, 50);
-                }}
+                onChange={(e) => handleSectionChange(e.target.value)}
                 className="w-full bg-transparent text-xs text-slate-200 focus:outline-none cursor-pointer"
               >
                 <option value="" className="bg-slate-950">Semua Section</option>
@@ -387,16 +509,13 @@ export default function P2HListPage() {
             </div>
 
             {/* Status Unit Filter */}
-            <div className="flex-1 sm:flex-initial bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 sm:py-1.5 min-w-30">
+            <div className="flex-1 sm:flex-initial bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 sm:py-1.5 min-w-28">
               <select
                 value={unitStatusFilter}
-                onChange={(e) => {
-                  setUnitStatusFilter(e.target.value);
-                  setTimeout(loadData, 50);
-                }}
+                onChange={(e) => handleUnitStatusChange(e.target.value)}
                 className="w-full bg-transparent text-xs text-slate-200 focus:outline-none cursor-pointer"
               >
-                <option value="" className="bg-slate-950">Status Unit: Semua</option>
+                <option value="" className="bg-slate-950">Status: Semua</option>
                 <option value="LAYAK" className="bg-slate-950">LAYAK</option>
                 <option value="SIAP" className="bg-slate-950">SIAP</option>
                 <option value="TIDAK_LAYAK" className="bg-slate-950">TIDAK LAYAK</option>
@@ -404,18 +523,66 @@ export default function P2HListPage() {
               </select>
             </div>
 
+            {/* Reset Filter Button */}
+            {(categoryFilter || shiftFilter || sectionFilter || unitStatusFilter || search) && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="px-3 py-2 sm:py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 hover:bg-rose-500/20 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Reset Filter"
+              >
+                <X className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Reset</span>
+              </button>
+            )}
+
             {/* Refresh Button */}
             <button
               type="button"
-              onClick={() => loadData()}
+              onClick={() => loadData(page, limit, categoryFilter, shiftFilter, sectionFilter, unitStatusFilter, driverStatusFilter, search)}
               disabled={isLoading}
-              className="p-2.5 sm:p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-2.5 sm:p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
               title="Segarkan Data"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-amber-400" : ""}`} />
             </button>
           </div>
         </form>
+
+        {/* Quick Category Chips / Pills */}
+        <div className="pt-2.5 border-t border-slate-800/70 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-700">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 shrink-0">
+            Kategori:
+          </span>
+          <button
+            type="button"
+            onClick={() => handleCategoryChange("")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              categoryFilter === ""
+                ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-bold"
+                : "bg-slate-950/80 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700"
+            }`}
+          >
+            Semua
+          </button>
+          {CATEGORIES.map((cat) => {
+            const isActive = categoryFilter === cat.value;
+            return (
+              <button
+                key={cat.value}
+                type="button"
+                onClick={() => handleCategoryChange(cat.value)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  isActive
+                    ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-bold"
+                    : "bg-slate-950/80 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700"
+                }`}
+              >
+                {cat.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* ================= DESKTOP TABLE VIEW (hidden md:block) ================= */}
@@ -448,7 +615,7 @@ export default function P2HListPage() {
                     <ClipboardCheck className="w-8 h-8 mx-auto text-slate-600 mb-2" />
                     <p className="font-semibold text-slate-400">Belum ada data pemeriksaan P2H</p>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Klik tombol "+ Buat Form P2H Baru" untuk memulai inspeksi armada
+                      Pemeriksaan P2H harian dicatat dan disubmit langsung oleh Operator/Driver armada.
                     </p>
                   </td>
                 </tr>
@@ -602,6 +769,13 @@ export default function P2HListPage() {
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => generateAndPrintP2HPdf(item)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-slate-800 transition-colors cursor-pointer"
+                            title="Download PDF / Cetak Formulir"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                          </button>
                           <button
                             onClick={() => handleOpenDetail(item)}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-slate-800 transition-colors cursor-pointer"
@@ -759,8 +933,15 @@ export default function P2HListPage() {
                 {/* Action Buttons */}
                 <div className="pt-2 border-t border-slate-800/80 flex items-center gap-2">
                   <button
+                    onClick={() => generateAndPrintP2HPdf(item)}
+                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 transition-colors cursor-pointer"
+                    title="Download PDF / Cetak Formulir"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                  </button>
+                  <button
                     onClick={() => handleOpenDetail(item)}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-amber-400 transition-colors"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-amber-400 transition-colors cursor-pointer"
                   >
                     <Eye className="w-3.5 h-3.5" />
                     <span>Lihat Detail Lengkap</span>
@@ -768,7 +949,7 @@ export default function P2HListPage() {
                   {isPrivileged && (
                     <button
                       onClick={() => handleOpenDelete(item)}
-                      className="p-2 rounded-xl bg-rose-950/40 hover:bg-rose-900/40 border border-rose-500/20 text-rose-400 transition-colors"
+                      className="p-2 rounded-xl bg-rose-950/40 hover:bg-rose-900/40 border border-rose-500/20 text-rose-400 transition-colors cursor-pointer"
                       title="Hapus Data"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -818,12 +999,23 @@ export default function P2HListPage() {
                 </div>
               </div>
 
-              <button
-                onClick={() => setIsDetailOpen(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => generateAndPrintP2HPdf(selectedInspection)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-500/40 text-emerald-300 text-xs font-semibold transition-colors cursor-pointer"
+                  title="Download PDF / Cetak Formulir P2H"
+                >
+                  <Printer className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Download PDF</span>
+                </button>
+                <button
+                  onClick={() => setIsDetailOpen(false)}
+                  className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Modal Content Sections */}
@@ -1428,9 +1620,15 @@ export default function P2HListPage() {
                       : "7. DATA OPERASI & FINAL / KESIMPULAN"}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-emerald-400 font-semibold">
-                  <span>✔ Validasi Operator / Driver:</span>
-                  <span className="text-slate-200">Saya menyatakan data pemeriksaan adalah benar</span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/30">
+                  <div className="flex items-center gap-2 text-emerald-400 font-semibold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Validasi Operator / Driver:</span>
+                    <span className="text-slate-200 text-xs">Saya menyatakan data pemeriksaan adalah benar</span>
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-extrabold text-[11px] border border-emerald-500/40 shrink-0 flex items-center gap-1 self-start sm:self-auto">
+                    ✔ APPROVED
+                  </span>
                 </div>
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
@@ -1456,11 +1654,19 @@ export default function P2HListPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex justify-end pt-3 border-t border-slate-800">
+            <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => generateAndPrintP2HPdf(selectedInspection)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-colors cursor-pointer"
+              >
+                <Printer className="w-4 h-4 text-emerald-400" />
+                <span>Download / Cetak PDF</span>
+              </button>
               <button
                 type="button"
                 onClick={() => setIsDetailOpen(false)}
-                className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition-colors"
+                className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition-colors cursor-pointer"
               >
                 Tutup
               </button>
