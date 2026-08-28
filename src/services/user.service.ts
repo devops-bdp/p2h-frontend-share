@@ -1,6 +1,5 @@
 import { getAuthSession } from './auth.service';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import { API_BASE_URL } from './api.config';
 
 export type UserRole = 'SUPERADMIN' | 'ADMIN' | 'USER';
 
@@ -123,7 +122,7 @@ export async function fetchUsers(params?: {
   if (params?.department) query.append('department', params.department);
   if (params?.posision) query.append('posision', params.posision);
 
-  const url = `${API_URL}/api/users${query.toString() ? `?${query.toString()}` : ''}`;
+  const url = `${API_BASE_URL}/users${query.toString() ? `?${query.toString()}` : ''}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -139,7 +138,7 @@ export async function fetchUsers(params?: {
 }
 
 export async function fetchUserById(id: number): Promise<{ success: boolean; data: User }> {
-  const response = await fetch(`${API_URL}/api/users/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/users/${id}`, {
     method: 'GET',
     headers: getAuthHeaders(),
   });
@@ -155,7 +154,7 @@ export async function fetchUserById(id: number): Promise<{ success: boolean; dat
 export async function createUser(
   data: UserInput
 ): Promise<{ success: boolean; message: string; data: User }> {
-  const response = await fetch(`${API_URL}/api/users`, {
+  const response = await fetch(`${API_BASE_URL}/users`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -173,7 +172,7 @@ export async function updateUser(
   id: number,
   data: UserUpdateInput
 ): Promise<{ success: boolean; message: string; data: User }> {
-  const response = await fetch(`${API_URL}/api/users/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/users/${id}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -191,7 +190,7 @@ export async function resetUserPassword(
   id: number,
   newPassword?: string
 ): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(`${API_URL}/api/users/${id}/reset-password`, {
+  const response = await fetch(`${API_BASE_URL}/users/${id}/reset-password`, {
     method: 'PATCH',
     headers: getAuthHeaders(),
     body: JSON.stringify({ newPassword }),
@@ -208,7 +207,7 @@ export async function resetUserPassword(
 export async function deleteUser(
   id: number
 ): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(`${API_URL}/api/users/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/users/${id}`, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   });
@@ -243,7 +242,7 @@ export interface BulkUserResponse {
 export async function bulkCreateUsers(
   users: Partial<UserInput>[]
 ): Promise<BulkUserResponse> {
-  const response = await fetch(`${API_URL}/api/users/bulk`, {
+  const response = await fetch(`${API_BASE_URL}/users/bulk`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ users }),

@@ -1,7 +1,5 @@
 import { getAuthSession } from "./auth.service";
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+import { API_BASE_URL } from "./api.config";
 
 export const MASTER_PUBLIC_P2H_TOKEN = "#BATARAMPH2026";
 export const DEFAULT_PUBLIC_P2H_TOKEN = "#BATARAMPH2026";

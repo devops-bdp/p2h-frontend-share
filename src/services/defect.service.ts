@@ -1,7 +1,5 @@
 import { getAuthSession } from "./auth.service";
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+import { API_BASE_URL } from "./api.config";
 
 export type DefectSeverity = "CRITICAL" | "MAJOR" | "MINOR";
 export type DefectStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";

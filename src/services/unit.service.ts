@@ -1,6 +1,5 @@
 import { getAuthSession } from './auth.service';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import { API_BASE_URL } from './api.config';
 
 export interface Unit {
   id: number;
@@ -45,7 +44,7 @@ export async function fetchUnits(params?: {
   if (params?.category) query.append('category', params.category);
   if (params?.status) query.append('status', params.status);
 
-  const url = `${API_URL}/api/units${query.toString() ? `?${query.toString()}` : ''}`;
+  const url = `${API_BASE_URL}/units${query.toString() ? `?${query.toString()}` : ''}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -61,7 +60,7 @@ export async function fetchUnits(params?: {
 }
 
 export async function fetchUnitById(id: number): Promise<{ success: boolean; data: Unit }> {
-  const response = await fetch(`${API_URL}/api/units/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/units/${id}`, {
     method: 'GET',
     headers: getAuthHeaders(),
   });
@@ -75,7 +74,7 @@ export async function fetchUnitById(id: number): Promise<{ success: boolean; dat
 }
 
 export async function createUnit(data: UnitInput): Promise<{ success: boolean; message: string; data: Unit }> {
-  const response = await fetch(`${API_URL}/api/units`, {
+  const response = await fetch(`${API_BASE_URL}/units`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -93,7 +92,7 @@ export async function updateUnit(
   id: number,
   data: Partial<UnitInput>
 ): Promise<{ success: boolean; message: string; data: Unit }> {
-  const response = await fetch(`${API_URL}/api/units/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/units/${id}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -108,7 +107,7 @@ export async function updateUnit(
 }
 
 export async function deleteUnit(id: number): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(`${API_URL}/api/units/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/units/${id}`, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   });

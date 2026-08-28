@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import { API_BASE_URL } from './api.config';
 
 export interface UserProfile {
   id: number;
@@ -20,7 +20,7 @@ export interface LoginResponse {
 }
 
 export async function loginUser(nrp: number, password: string): Promise<LoginResponse> {
-  const response = await fetch(`${API_URL}/api/auth/login`, {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -50,7 +50,7 @@ export async function fetchDrivers(): Promise<{
     headers['Authorization'] = `Bearer ${session.token}`;
   }
 
-  const response = await fetch(`${API_URL}/api/auth/drivers`, {
+  const response = await fetch(`${API_BASE_URL}/auth/drivers`, {
     method: 'GET',
     headers,
   });

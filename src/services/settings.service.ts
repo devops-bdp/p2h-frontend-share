@@ -1,7 +1,5 @@
 import { getAuthSession, saveAuthSession } from "./auth.service";
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+import { API_BASE_URL } from "./api.config";
 
 export interface SystemConfig {
   p2hToken: string;
