@@ -10,6 +10,7 @@ export interface UserProfile {
   role: string;
   phoneNumber?: string;
   email?: string;
+  avatar?: string | null;
 }
 
 export interface LoginResponse {
@@ -78,6 +79,19 @@ export function getAuthSession() {
     return { token, user };
   }
   return { token: null, user: null };
+}
+
+export function updateAuthUserAvatar(avatarUrl: string | null) {
+  if (typeof window !== 'undefined') {
+    const userStr = localStorage.getItem('batara_p2h_user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      user.avatar = avatarUrl;
+      localStorage.setItem('batara_p2h_user', JSON.stringify(user));
+      // Dispatch custom event so components can update reactively
+      window.dispatchEvent(new Event('auth_user_updated'));
+    }
+  }
 }
 
 export function clearAuthSession() {

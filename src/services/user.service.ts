@@ -31,6 +31,7 @@ export interface User {
   posision: UserPosition;
   phoneNumber?: string | null;
   email?: string | null;
+  avatar?: string | null;
   role: UserRole;
   createdAt: string;
   updatedAt: string;
@@ -60,6 +61,7 @@ export interface UserUpdateInput {
   posision?: UserPosition;
   phoneNumber?: string;
   email?: string;
+  avatar?: string | null;
   role?: UserRole;
 }
 
@@ -429,5 +431,71 @@ export function parseUsersCsv(csvText: string): {
   }
 
   return { data: parsedUsers, errors };
+}
+
+/**
+ * Upload Foto Avatar Pengguna ke Cloudinary (folder: p2h-app/user-avatar)
+ * Jika userId tidak disediakan, otomatis mengupdate user yang sedang login
+ */
+export async function uploadUserAvatar(
+  file: File,
+  userId?: number
+): Promise<{ success: boolean; message: string; avatarUrl: string; data: User }> {
+  const session = getAuthSession();
+  const formData = new FormData();
+  formData.append('avatar', file);
+
+  const endpoint = userId
+    ? `${API_BASE_URL}/users/${userId}/avatar`
+    : `${API_BASE_URL}/users/avatar`;
+
+  const headers: HeadersInit = {};
+  if (session.token) {
+    headers['Authorization'] = `Bearer ${session.token}`;
+  }
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || 'Gagal mengunggah foto avatar ke Cloudinary.');
+  }
+
+  return data;
+}
+
+/**
+ * Hapus Foto Avatar Pengguna
+ */
+export async function deleteUserAvatar(
+  userId?: number
+): Promise<{ success: boolean; message: string; data: User }> {
+  const session = getAuthSession();
+  const endpoint = userId
+    ? `${API_BASE_URL}/users/${userId}/avatar`
+    : `${API_BASE_URL}/users/avatar`;
+
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  if (session.token) {
+    headers['Authorization'] = `Bearer ${session.token}`;
+  }
+
+  const response = await fetch(endpoint, {
+    method: 'DELETE',
+    headers,
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || 'Gagal menghapus foto avatar.');
+  }
+
+  return data;
 }
 

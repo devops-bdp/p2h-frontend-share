@@ -36,6 +36,7 @@ import {
   ArrowRight,
   ArrowLeft,
   HelpCircle,
+  Camera,
 } from "lucide-react";
 import {
   User,
@@ -51,6 +52,8 @@ import {
   createUser,
   updateUser,
   deleteUser,
+  uploadUserAvatar,
+  deleteUserAvatar,
   resetUserPassword,
   bulkCreateUsers,
   downloadUserCsvTemplate,
@@ -64,7 +67,7 @@ import {
   showConfirmDialog,
   showToast,
 } from "@/lib/swal";
-import { getAuthSession } from "@/services/auth.service";
+import { getAuthSession, updateAuthUserAvatar } from "@/services/auth.service";
 import Pagination from "@/components/Pagination";
 
 export default function UsersPage() {
@@ -248,6 +251,67 @@ export default function UsersPage() {
     });
     setShowPassword(false);
     setIsModalOpen(true);
+  };
+
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  // Handle Avatar Upload ke Cloudinary (p2h-app/user-avatar)
+  const handleAvatarUpload = async (file: File, userId: number) => {
+    if (!file) return;
+    setIsUploadingAvatar(true);
+    try {
+      const res = await uploadUserAvatar(file, userId);
+      showAlertSuccess(
+        "Foto Berhasil Diunggah",
+        "Foto profil avatar telah diperbarui dan disimpan di Cloudinary."
+      );
+      if (selectedUser && selectedUser.id === userId) {
+        setSelectedUser({ ...selectedUser, avatar: res.avatarUrl });
+      }
+      if (currentUser && currentUser.id === userId) {
+        updateAuthUserAvatar(res.avatarUrl);
+      }
+      loadUsers();
+    } catch (error: any) {
+      showAlertError(
+        "Gagal Mengunggah Foto",
+        error.message || "Terjadi kesalahan saat mengunggah foto ke Cloudinary."
+      );
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  // Handle Delete Avatar
+  const handleAvatarDelete = async (userId: number) => {
+    const isConfirmed = await showConfirmDialog({
+      title: "Hapus Foto Profil?",
+      text: "Foto avatar pengguna akan dihapus dan dikembalikan ke avatar inisial.",
+      confirmButtonText: "Ya, Hapus Foto",
+      isDanger: true,
+    });
+
+    if (!isConfirmed) return;
+
+    setIsUploadingAvatar(true);
+    try {
+      await deleteUserAvatar(userId);
+      showAlertSuccess("Foto Dihapus", "Foto avatar berhasil dihapus.");
+      if (selectedUser && selectedUser.id === userId) {
+        setSelectedUser({ ...selectedUser, avatar: null });
+      }
+      if (currentUser && currentUser.id === userId) {
+        updateAuthUserAvatar(null);
+      }
+      loadUsers();
+    } catch (error: any) {
+      showAlertError(
+        "Gagal Menghapus Foto",
+        error.message || "Terjadi kesalahan saat menghapus avatar."
+      );
+    } finally {
+      setIsUploadingAvatar(false);
+    }
   };
 
   // Open Reset Password Modal
@@ -804,9 +868,17 @@ export default function UsersPage() {
                     {/* User Identity */}
                     <td className="py-3.5 px-4 sm:px-6">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-amber-500/20 to-amber-400/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-sm shrink-0 shadow-inner">
-                          {user.firstName ? user.firstName.charAt(0).toUpperCase() : "U"}
-                        </div>
+                        {user.avatar ? (
+                          <img
+                            src={user.avatar}
+                            alt={`${user.firstName} ${user.lastName}`}
+                            className="w-10 h-10 rounded-xl object-cover border border-amber-500/30 shrink-0 shadow-inner"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-amber-500/20 to-amber-400/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-sm shrink-0 shadow-inner">
+                            {user.firstName ? user.firstName.charAt(0).toUpperCase() : "U"}
+                          </div>
+                        )}
                         <div className="min-w-0">
                           <div className="font-bold text-white group-hover:text-amber-400 transition-colors flex items-center gap-1.5">
                             <span>{user.firstName} {user.lastName}</span>
@@ -1480,6 +1552,80 @@ export default function UsersPage() {
 
             {/* Modal Body / Form */}
             <form onSubmit={handleFormSubmit} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+              {/* Avatar Section for Edit Mode */}
+              {modalMode === "edit" && selectedUser && (
+                <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-col sm:flex-row items-center gap-4">
+                  <div className="relative group shrink-0">
+                    {selectedUser.avatar ? (
+                      <img
+                        src={selectedUser.avatar}
+                        alt="Avatar"
+                        className="w-16 h-16 rounded-2xl object-cover border-2 border-amber-500/40 shadow-md shadow-amber-500/10"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-xl">
+                        {formData.firstName ? formData.firstName.charAt(0).toUpperCase() : "U"}
+                      </div>
+                    )}
+                    <label className="absolute inset-0 rounded-2xl bg-slate-950/75 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-[10px] font-semibold">
+                      <Camera className="w-4 h-4 mb-0.5 text-amber-400" />
+                      <span>Ganti</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={isUploadingAvatar}
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleAvatarUpload(e.target.files[0], selectedUser.id);
+                          }
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="flex-1 text-center sm:text-left min-w-0">
+                    <h5 className="text-xs font-bold text-white flex items-center justify-center sm:justify-start gap-1.5">
+                      <span>Foto Profil Avatar (Cloudinary)</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+                        p2h-app/user-avatar
+                      </span>
+                    </h5>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Format JPG, PNG, WEBP maks. 5MB. Otomatis di-crop 400x400 fokus wajah.
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-2">
+                      <label className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-sm">
+                        {isUploadingAvatar ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                        <span>{isUploadingAvatar ? "Mengunggah..." : "Unggah Foto Baru"}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={isUploadingAvatar}
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleAvatarUpload(e.target.files[0], selectedUser.id);
+                            }
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+
+                      {selectedUser.avatar && (
+                        <button
+                          type="button"
+                          onClick={() => handleAvatarDelete(selectedUser.id)}
+                          disabled={isUploadingAvatar}
+                          className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-semibold transition-colors cursor-pointer"
+                        >
+                          Hapus Foto
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Section 1: Identitas Nama & NRP */}
               <div className="space-y-3">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400/90 flex items-center gap-1.5">

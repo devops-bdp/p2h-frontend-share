@@ -19,6 +19,13 @@ import {
   Building2,
   Download,
   FileSpreadsheet,
+  Upload,
+  Copy,
+  Check,
+  ArrowRight,
+  ChevronRight,
+  AlertTriangle,
+  FileText,
 } from "lucide-react";
 import {
   Unit,
@@ -27,6 +34,10 @@ import {
   createUnit,
   updateUnit,
   deleteUnit,
+  bulkCreateUnits,
+  downloadUnitCsvTemplate,
+  parseUnitsCsv,
+  BulkUnitResponse,
 } from "@/services/unit.service";
 import {
   showAlertSuccess,
@@ -89,11 +100,23 @@ export default function UnitsPage() {
     category: "LIGHT_VECHICLE",
     brand: "",
     description: "",
-    ownerName: "",
+    ownerName: "PT Batara Dharma Persada",
     km: 0,
     hourMeter: null,
     status: "ACTIVE",
   });
+
+  // Bulk Import State
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [bulkStep, setBulkStep] = useState<"input" | "preview" | "result">("input");
+  const [bulkInputMode, setBulkInputMode] = useState<"file" | "paste">("file");
+  const [csvText, setCsvText] = useState("");
+  const [parsedBulkUnits, setParsedBulkUnits] = useState<Partial<UnitInput>[]>([]);
+  const [bulkParseErrors, setBulkParseErrors] = useState<string[]>([]);
+  const [isProcessingBulk, setIsProcessingBulk] = useState(false);
+  const [bulkResult, setBulkResult] = useState<BulkUnitResponse | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
     const session = getAuthSession();
@@ -330,6 +353,91 @@ export default function UnitsPage() {
     }
   };
 
+  // Bulk Import Handlers
+  const handleOpenBulkModal = () => {
+    setBulkStep("input");
+    setBulkInputMode("file");
+    setCsvText("");
+    setParsedBulkUnits([]);
+    setBulkParseErrors([]);
+    setBulkResult(null);
+    setIsBulkModalOpen(true);
+  };
+
+  const handleCloseBulkModal = () => {
+    setIsBulkModalOpen(false);
+    if (bulkStep === "result") {
+      loadUnits();
+    }
+  };
+
+  const processCsvText = (text: string) => {
+    const { data, errors } = parseUnitsCsv(text);
+    setParsedBulkUnits(data);
+    setBulkParseErrors(errors);
+    if (data.length > 0) {
+      setBulkStep("preview");
+    } else {
+      showAlertWarning("Gagal Membaca CSV", errors.join("\n") || "Data tidak ditemukan dalam teks CSV.");
+    }
+  };
+
+  const handleFileUpload = (file: File) => {
+    if (!file.name.endsWith(".csv") && !file.type.includes("csv") && !file.type.includes("text")) {
+      showAlertWarning("Format File Salah", "Harap unggah file dengan format .CSV");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      setCsvText(content);
+      processCsvText(content);
+    };
+    reader.readAsText(file);
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleExecuteBulkImport = async () => {
+    if (parsedBulkUnits.length === 0) {
+      showAlertWarning("Data Kosong", "Tidak ada data unit yang valid untuk diimpor.");
+      return;
+    }
+
+    setIsProcessingBulk(true);
+    try {
+      const res = await bulkCreateUnits(parsedBulkUnits);
+      setBulkResult(res);
+      setBulkStep("result");
+      loadUnits();
+    } catch (error: any) {
+      showAlertError(
+        "Gagal Impor Bulk",
+        error.message || "Terjadi kesalahan saat memproses bulk create unit."
+      );
+    } finally {
+      setIsProcessingBulk(false);
+    }
+  };
+
   // Stats calculation
   const stats = useMemo(() => {
     const total = units.length;
@@ -373,10 +481,20 @@ export default function UnitsPage() {
             onClick={handleExportExcel}
             disabled={isLoading || units.length === 0}
             className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/60 font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Download Data Armada Unit ke File Excel (.CSV)"
+            title="Download Data Armada Unit ke File Excel (.xlsx)"
           >
             <Download className="w-4 h-4 text-emerald-400" />
             <span>Download Excel</span>
+          </button>
+
+          {/* Bulk Import Button */}
+          <button
+            onClick={handleOpenBulkModal}
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 hover:border-amber-500/60 font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
+            title="Impor Banyak Unit Sekaligus via File CSV"
+          >
+            <Upload className="w-4 h-4 text-amber-400" />
+            <span>Impor Bulk Unit</span>
           </button>
 
           {/* Create Unit Button */}
@@ -1065,6 +1183,533 @@ export default function UnitsPage() {
                   <span>Ya, Hapus Unit</span>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL BULK IMPORT UNIT ================= */}
+      {isBulkModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                  <Upload className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-extrabold text-white tracking-tight">
+                    Impor Massal Master Unit (.CSV)
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Daftarkan banyak armada sekaligus dari file Excel / CSV ke dalam sistem P2H.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseBulkModal}
+                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Stepper Wizard Bar */}
+            <div className="px-6 py-3 bg-slate-950/40 border-b border-slate-800/60 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${
+                    bulkStep === "input"
+                      ? "bg-amber-500 text-slate-950 font-extrabold"
+                      : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                  }`}
+                >
+                  1
+                </div>
+                <span className={bulkStep === "input" ? "text-amber-400 font-semibold" : "text-slate-400"}>
+                  Pilih / Unggah File
+                </span>
+              </div>
+
+              <div className="w-8 h-px bg-slate-800" />
+
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${
+                    bulkStep === "preview"
+                      ? "bg-amber-500 text-slate-950 font-extrabold"
+                      : bulkStep === "result"
+                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                      : "bg-slate-800 text-slate-400"
+                  }`}
+                >
+                  2
+                </div>
+                <span className={bulkStep === "preview" ? "text-amber-400 font-semibold" : "text-slate-400"}>
+                  Pratinjau Data ({parsedBulkUnits.length})
+                </span>
+              </div>
+
+              <div className="w-8 h-px bg-slate-800" />
+
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${
+                    bulkStep === "result"
+                      ? "bg-emerald-500 text-slate-950 font-extrabold"
+                      : "bg-slate-800 text-slate-400"
+                  }`}
+                >
+                  3
+                </div>
+                <span className={bulkStep === "result" ? "text-emerald-400 font-semibold" : "text-slate-400"}>
+                  Laporan Hasil
+                </span>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
+              {/* STEP 1: INPUT FILE / PASTE */}
+              {bulkStep === "input" && (
+                <div className="space-y-4">
+                  {/* Template Card Info */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                          <FileSpreadsheet className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                            <span>Template Resmi Impor Master Unit</span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+                              Format .CSV
+                            </span>
+                          </h4>
+                          <p className="text-xs text-slate-300 mt-0.5">
+                            Unduh template CSV resmi untuk mendaftarkan armada kendaraan &amp; alat berat tambang.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const sampleText = `unitNo;category;brand;description;ownerName;km;hourMeter;status\nLV-01;LIGHT_VECHICLE;Toyota;Hilux Double Cabin 4x4;PT Batara Dharma Persada;0;;ACTIVE\nTH-01;TELEHENDLER;JCB;JCB 535-95 Telehandler;PT Batara Dharma Persada;0;0;ACTIVE\nST-01;STORING_TRUCK;Hino;Dutro 130 HD Workshop;PT Batara Dharma Persada;0;;ACTIVE\nFT-01;FUEL_TRUCK;Hino;Ranger FM 260 JD (16.000L);PT Batara Dharma Persada;0;0;ACTIVE\nGS-01;GENSET;Denyo;DCA-80ESK (80 kVA);PT Batara Dharma Persada;0;0;ACTIVE\nCP-01;COMPRESSOR;Airman;PDS185S Diesel Compressor;PT Batara Dharma Persada;0;0;ACTIVE\nEX-01;EXCAVATOR;Komatsu;PC200-8M0 Excavator;PT Batara Dharma Persada;0;0;ACTIVE\nDZ-01;DOZER;Caterpillar;D6R Bulldozer;PT Batara Dharma Persada;0;0;ACTIVE`;
+                            navigator.clipboard.writeText(sampleText);
+                            setIsCopied(true);
+                            setTimeout(() => setIsCopied(false), 2000);
+                          }}
+                          className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700 cursor-pointer"
+                          title="Salin contoh baris CSV ke clipboard"
+                        >
+                          {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-400" />}
+                          <span>{isCopied ? "Tersalin!" : "Salin Contoh"}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={downloadUnitCsvTemplate}
+                          className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-colors shadow-md shadow-amber-500/10 cursor-pointer"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Unduh File Template (.csv)</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Table of Columns */}
+                    <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/80">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead className="bg-slate-900/90 text-slate-400 text-[10px] uppercase font-bold border-b border-slate-800">
+                          <tr>
+                            <th className="py-2 px-3">Kolom (Header)</th>
+                            <th className="py-2 px-2.5 text-center">Status</th>
+                            <th className="py-2 px-3">Penjelasan &amp; Nilai yang Valid</th>
+                            <th className="py-2 px-3">Contoh</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/60 text-[11px]">
+                          <tr>
+                            <td className="py-2 px-3 font-mono font-bold text-amber-400">unitNo</td>
+                            <td className="py-2 px-2.5 text-center">
+                              <span className="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-semibold text-[10px]">Wajib</span>
+                            </td>
+                            <td className="py-2 px-3 text-slate-300">Nomor lambung unik armada</td>
+                            <td className="py-2 px-3 font-mono text-slate-400">LV-01 / EX-101</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 font-mono font-bold text-amber-400">category</td>
+                            <td className="py-2 px-2.5 text-center">
+                              <span className="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-semibold text-[10px]">Wajib</span>
+                            </td>
+                            <td className="py-2 px-3 text-slate-300">
+                              <span className="text-slate-400">Pilihan:</span> <code className="text-sky-300 font-mono">LIGHT_VECHICLE</code> (LV), <code className="text-sky-300 font-mono">TELEHENDLER</code> (TH), <code className="text-sky-300 font-mono">STORING_TRUCK</code> (ST), <code className="text-sky-300 font-mono">FUEL_TRUCK</code> (FT), <code className="text-sky-300 font-mono">GENSET</code>, <code className="text-sky-300 font-mono">COMPRESSOR</code>, <code className="text-sky-300 font-mono">EXCAVATOR</code>, <code className="text-sky-300 font-mono">DOZER</code>, <code className="text-sky-300 font-mono">COMPACTOR</code>, <code className="text-sky-300 font-mono">CRANE_TRUCK</code>, <code className="text-sky-300 font-mono">MOBILE_CRANE</code>, <code className="text-sky-300 font-mono">AMBULANCE</code>
+                            </td>
+                            <td className="py-2 px-3 font-mono text-slate-400">LIGHT_VECHICLE</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 font-mono font-bold text-amber-400">brand</td>
+                            <td className="py-2 px-2.5 text-center">
+                              <span className="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-semibold text-[10px]">Wajib</span>
+                            </td>
+                            <td className="py-2 px-3 text-slate-300">Merk / Pabrikan armada</td>
+                            <td className="py-2 px-3 font-mono text-slate-400">Toyota / Caterpillar</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 font-mono text-slate-300">description</td>
+                            <td className="py-2 px-2.5 text-center">
+                              <span className="px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-medium text-[10px]">Opsional</span>
+                            </td>
+                            <td className="py-2 px-3 text-slate-300">Model / Tipe armada</td>
+                            <td className="py-2 px-3 font-mono text-slate-400">Hilux 4x4 Double Cabin</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 font-mono text-slate-300">ownerName</td>
+                            <td className="py-2 px-2.5 text-center">
+                              <span className="px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-medium text-[10px]">Opsional</span>
+                            </td>
+                            <td className="py-2 px-3 text-slate-300">Pemilik / Kontraktor (Default: PT Batara Dharma Persada)</td>
+                            <td className="py-2 px-3 font-mono text-slate-400">PT Batara Dharma Persada</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 font-mono text-slate-300">km</td>
+                            <td className="py-2 px-2.5 text-center">
+                              <span className="px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-medium text-[10px]">Opsional</span>
+                            </td>
+                            <td className="py-2 px-3 text-slate-300">Kilometer (KM) Odometer Awal (Default: 0)</td>
+                            <td className="py-2 px-3 font-mono text-slate-400">0</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 font-mono text-slate-300">hourMeter</td>
+                            <td className="py-2 px-2.5 text-center">
+                              <span className="px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-medium text-[10px]">Opsional</span>
+                            </td>
+                            <td className="py-2 px-3 text-slate-300">Hour Meter (HM) Awal (Untuk alat berat)</td>
+                            <td className="py-2 px-3 font-mono text-slate-400">0</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 font-mono text-slate-300">status</td>
+                            <td className="py-2 px-2.5 text-center">
+                              <span className="px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-medium text-[10px]">Opsional</span>
+                            </td>
+                            <td className="py-2 px-3 text-slate-300">
+                              <span className="text-slate-400">Pilihan:</span> <code className="text-emerald-300 font-mono">ACTIVE</code> (Ready), <code className="text-rose-300 font-mono">INACTIVE</code> (Breakdown)
+                            </td>
+                            <td className="py-2 px-3 font-mono text-slate-400">ACTIVE</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Input Method Switcher */}
+                  <div className="flex items-center gap-2 p-1 rounded-xl bg-slate-950 border border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setBulkInputMode("file")}
+                      className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer ${
+                        bulkInputMode === "file" ? "bg-slate-800 text-white shadow-sm" : "text-slate-400 hover:text-slate-300"
+                      }`}
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Metode 1: Unggah File CSV</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBulkInputMode("paste");
+                        if (!csvText) {
+                          setCsvText(`unitNo;category;brand;description;ownerName;km;hourMeter;status\nLV-01;LIGHT_VECHICLE;Toyota;Hilux Double Cabin 4x4;PT Batara Dharma Persada;0;;ACTIVE\nTH-01;TELEHENDLER;JCB;JCB 535-95 Telehandler;PT Batara Dharma Persada;0;0;ACTIVE\nST-01;STORING_TRUCK;Hino;Dutro 130 HD Workshop;PT Batara Dharma Persada;0;;ACTIVE\nFT-01;FUEL_TRUCK;Hino;Ranger FM 260 JD (16.000L);PT Batara Dharma Persada;0;0;ACTIVE\nGS-01;GENSET;Denyo;DCA-80ESK (80 kVA);PT Batara Dharma Persada;0;0;ACTIVE\nCP-01;COMPRESSOR;Airman;PDS185S Diesel Compressor;PT Batara Dharma Persada;0;0;ACTIVE\nEX-01;EXCAVATOR;Komatsu;PC200-8M0 Excavator;PT Batara Dharma Persada;0;0;ACTIVE\nDZ-01;DOZER;Caterpillar;D6R Bulldozer;PT Batara Dharma Persada;0;0;ACTIVE`);
+                        }
+                      }}
+                      className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer ${
+                        bulkInputMode === "paste" ? "bg-slate-800 text-white shadow-sm" : "text-slate-400 hover:text-slate-300"
+                      }`}
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Metode 2: Salin / Tempel Teks CSV</span>
+                    </button>
+                  </div>
+
+                  {/* Mode 1: Drag & Drop Zone */}
+                  {bulkInputMode === "file" && (
+                    <div
+                      onDragEnter={handleDrag}
+                      onDragLeave={handleDrag}
+                      onDragOver={handleDrag}
+                      onDrop={handleDrop}
+                      className={`p-8 border-2 border-dashed rounded-3xl text-center transition-all ${
+                        dragActive
+                          ? "border-amber-500 bg-amber-500/10"
+                          : "border-slate-800 hover:border-slate-700 bg-slate-950/60"
+                      }`}
+                    >
+                      <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto mb-3">
+                        <Upload className="w-6 h-6" />
+                      </div>
+                      <h4 className="text-sm font-bold text-white">Tarik &amp; Lepas File CSV di sini</h4>
+                      <p className="text-xs text-slate-400 mt-1">atau klik tombol di bawah untuk memilih file dari komputer</p>
+
+                      <label className="inline-flex items-center gap-2 px-4 py-2 mt-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold cursor-pointer transition-colors border border-slate-700">
+                        <span>Pilih File CSV</span>
+                        <input
+                          type="file"
+                          accept=".csv,text/csv"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleFileUpload(e.target.files[0]);
+                            }
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  )}
+
+                  {/* Mode 2: Paste Raw CSV Text */}
+                  {bulkInputMode === "paste" && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-xs font-semibold text-slate-300">
+                          Editor Teks CSV Unit
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setCsvText(`unitNo;category;brand;description;ownerName;km;hourMeter;status\nLV-01;LIGHT_VECHICLE;Toyota;Hilux Double Cabin 4x4;PT Batara Dharma Persada;0;;ACTIVE\nTH-01;TELEHENDLER;JCB;JCB 535-95 Telehandler;PT Batara Dharma Persada;0;0;ACTIVE\nST-01;STORING_TRUCK;Hino;Dutro 130 HD Workshop;PT Batara Dharma Persada;0;;ACTIVE\nFT-01;FUEL_TRUCK;Hino;Ranger FM 260 JD (16.000L);PT Batara Dharma Persada;0;0;ACTIVE\nGS-01;GENSET;Denyo;DCA-80ESK (80 kVA);PT Batara Dharma Persada;0;0;ACTIVE\nCP-01;COMPRESSOR;Airman;PDS185S Diesel Compressor;PT Batara Dharma Persada;0;0;ACTIVE\nEX-01;EXCAVATOR;Komatsu;PC200-8M0 Excavator;PT Batara Dharma Persada;0;0;ACTIVE\nDZ-01;DOZER;Caterpillar;D6R Bulldozer;PT Batara Dharma Persada;0;0;ACTIVE`)}
+                          className="text-[11px] text-amber-400 hover:underline cursor-pointer"
+                        >
+                          Muat Ulang Contoh Data
+                        </button>
+                      </div>
+                      <textarea
+                        rows={8}
+                        value={csvText}
+                        onChange={(e) => setCsvText(e.target.value)}
+                        placeholder="unitNo;category;brand;description;ownerName;km;hourMeter;status"
+                        className="w-full p-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500 leading-relaxed"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => processCsvText(csvText)}
+                        disabled={!csvText.trim()}
+                        className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50 shadow-md shadow-amber-500/10"
+                      >
+                        <ArrowRight className="w-3.5 h-3.5" />
+                        <span>Validasi &amp; Lanjut ke Pratinjau Data</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* STEP 2: PREVIEW DATA */}
+              {bulkStep === "preview" && (
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-slate-950 rounded-2xl border border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold font-mono">
+                        {parsedBulkUnits.length} Unit Siap Diimpor
+                      </span>
+                      {bulkParseErrors.length > 0 && (
+                        <span className="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs font-bold font-mono">
+                          {bulkParseErrors.length} Baris Dilewati
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      Periksa data di bawah sebelum menyimpan ke database.
+                    </p>
+                  </div>
+
+                  {/* Parse Errors List */}
+                  {bulkParseErrors.length > 0 && (
+                    <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl space-y-1 text-xs text-rose-300">
+                      <div className="font-bold flex items-center gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
+                        <span>Catatan Baris Bermasalah:</span>
+                      </div>
+                      <ul className="list-disc pl-5 space-y-0.5 text-[11px] text-rose-200/90">
+                        {bulkParseErrors.map((err, idx) => (
+                          <li key={idx}>{err}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Preview Table */}
+                  <div className="border border-slate-800 rounded-2xl overflow-hidden bg-slate-950/60 max-h-80 overflow-y-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead className="bg-slate-900 text-slate-400 font-semibold sticky top-0 uppercase tracking-wider text-[10px] border-b border-slate-800">
+                        <tr>
+                          <th className="py-2.5 px-3">No</th>
+                          <th className="py-2.5 px-3">No. Lambung</th>
+                          <th className="py-2.5 px-3">Kategori</th>
+                          <th className="py-2.5 px-3">Merk / Brand</th>
+                          <th className="py-2.5 px-3">Model / Tipe</th>
+                          <th className="py-2.5 px-3">Owner</th>
+                          <th className="py-2.5 px-3 text-right">KM</th>
+                          <th className="py-2.5 px-3 text-right">HM</th>
+                          <th className="py-2.5 px-3 text-center">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60 text-[11px]">
+                        {parsedBulkUnits.map((u, idx) => (
+                          <tr key={idx} className="hover:bg-slate-900/40">
+                            <td className="py-2 px-3 text-slate-500 font-mono">{idx + 1}</td>
+                            <td className="py-2 px-3 font-bold font-mono text-amber-400">{u.unitNo}</td>
+                            <td className="py-2 px-3">
+                              <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px] font-semibold">
+                                {(u.category || "").replace(/_/g, " ")}
+                              </span>
+                            </td>
+                            <td className="py-2 px-3 text-white font-medium">{u.brand}</td>
+                            <td className="py-2 px-3 text-slate-400">{u.description || "-"}</td>
+                            <td className="py-2 px-3 text-slate-400">{u.ownerName || "PT Batara"}</td>
+                            <td className="py-2 px-3 text-right font-mono text-slate-300">{u.km ?? 0}</td>
+                            <td className="py-2 px-3 text-right font-mono text-slate-300">{u.hourMeter ?? "-"}</td>
+                            <td className="py-2 px-3 text-center">
+                              <span
+                                className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                                  u.status === "ACTIVE"
+                                    ? "bg-emerald-500/20 text-emerald-400"
+                                    : "bg-rose-500/20 text-rose-400"
+                                }`}
+                              >
+                                {u.status || "ACTIVE"}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: RESULT REPORT */}
+              {bulkStep === "result" && bulkResult && (
+                <div className="space-y-4">
+                  <div
+                    className={`p-5 rounded-3xl border text-center space-y-2 ${
+                      bulkResult.summary.failedCount === 0
+                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                        : "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                    }`}
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-slate-900/80 border border-slate-700/60 flex items-center justify-center mx-auto">
+                      {bulkResult.summary.failedCount === 0 ? (
+                        <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                      ) : (
+                        <AlertTriangle className="w-6 h-6 text-amber-400" />
+                      )}
+                    </div>
+                    <h4 className="text-base font-extrabold text-white">
+                      {bulkResult.summary.failedCount === 0
+                        ? "Impor Bulk Berhasil Sempurna!"
+                        : "Impor Bulk Selesai dengan Sebagian Catatan"}
+                    </h4>
+                    <p className="text-xs opacity-90 max-w-md mx-auto">{bulkResult.message}</p>
+                  </div>
+
+                  {/* Summary Metric Badges */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-center">
+                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Total Diproses</span>
+                      <strong className="text-base text-white font-mono">{bulkResult.summary.totalProcessed}</strong>
+                    </div>
+                    <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center">
+                      <span className="text-[10px] uppercase font-bold text-emerald-400 block">Berhasil Dibuat</span>
+                      <strong className="text-base text-emerald-400 font-mono">{bulkResult.summary.successCount}</strong>
+                    </div>
+                    <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-center">
+                      <span className="text-[10px] uppercase font-bold text-rose-400 block">Gagal / Dilewati</span>
+                      <strong className="text-base text-rose-400 font-mono">{bulkResult.summary.failedCount}</strong>
+                    </div>
+                  </div>
+
+                  {/* Failed Rows Detail */}
+                  {bulkResult.errors && bulkResult.errors.length > 0 && (
+                    <div className="space-y-2">
+                      <h5 className="text-xs font-bold text-rose-400">
+                        Rincian Baris yang Gagal / Dilewati ({bulkResult.errors.length}):
+                      </h5>
+                      <div className="border border-rose-500/20 rounded-xl overflow-hidden bg-slate-950 max-h-48 overflow-y-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead className="bg-rose-500/10 text-rose-300 text-[10px] uppercase font-bold border-b border-rose-500/20">
+                            <tr>
+                              <th className="py-2 px-3">Baris</th>
+                              <th className="py-2 px-3">No. Lambung</th>
+                              <th className="py-2 px-3">Penyebab Gagal</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800/60 text-[11px]">
+                            {bulkResult.errors.map((err, idx) => (
+                              <tr key={idx} className="hover:bg-rose-500/5">
+                                <td className="py-1.5 px-3 font-mono text-slate-400">{err.row}</td>
+                                <td className="py-1.5 px-3 font-mono font-bold text-white">{err.unitNo || "-"}</td>
+                                <td className="py-1.5 px-3 text-rose-300">{err.reason}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer Buttons */}
+            <div className="p-4 sm:p-5 border-t border-slate-800 bg-slate-900/90 flex items-center justify-between">
+              {bulkStep === "preview" ? (
+                <button
+                  type="button"
+                  onClick={() => setBulkStep("input")}
+                  disabled={isProcessingBulk}
+                  className="px-4 py-2.5 rounded-xl border border-slate-800 text-xs font-medium text-slate-300 hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Kembali ke Input
+                </button>
+              ) : (
+                <div />
+              )}
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleCloseBulkModal}
+                  disabled={isProcessingBulk}
+                  className="px-4 py-2.5 rounded-xl border border-slate-800 text-xs font-medium text-slate-300 hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  {bulkStep === "result" ? "Selesai & Tutup" : "Batal"}
+                </button>
+
+                {bulkStep === "preview" && (
+                  <button
+                    type="button"
+                    onClick={handleExecuteBulkImport}
+                    disabled={isProcessingBulk || parsedBulkUnits.length === 0}
+                    className="px-5 py-2.5 rounded-xl bg-linear-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {isProcessingBulk ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Mengimpor {parsedBulkUnits.length} Unit...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Mulai Impor ({parsedBulkUnits.length} Unit)</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

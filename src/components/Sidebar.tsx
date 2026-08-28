@@ -36,12 +36,22 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     role?: string;
     department?: string;
     posision?: string;
+    avatar?: string | null;
   } | null>(null);
 
   useEffect(() => {
-    const session = getAuthSession();
-    if (session.user) {
-      setUser(session.user);
+    const loadUser = () => {
+      const session = getAuthSession();
+      if (session.user) {
+        setUser(session.user);
+      }
+    };
+
+    loadUser();
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("auth_user_updated", loadUser);
+      return () => window.removeEventListener("auth_user_updated", loadUser);
     }
   }, []);
 
@@ -150,9 +160,17 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           {/* User Profile Card */}
           <div className="p-4 mx-3 my-4 rounded-2xl bg-slate-900/80 border border-slate-800/90 shadow-inner">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-sm shrink-0">
-                {user?.firstName ? user.firstName.charAt(0).toUpperCase() : "U"}
-              </div>
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.firstName || "Avatar"}
+                  className="w-10 h-10 rounded-xl object-cover border border-amber-500/30 shrink-0"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-sm shrink-0">
+                  {user?.firstName ? user.firstName.charAt(0).toUpperCase() : "U"}
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <h2 className="text-xs font-bold text-white truncate">
                   {user?.firstName ? `${user.firstName} ${user.lastName || ""}` : "User Portal"}

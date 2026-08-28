@@ -36,6 +36,8 @@ export async function exportP2HToExcel(
     shift?: string;
     section?: string;
     unitStatus?: string;
+    startDate?: string;
+    endDate?: string;
     search?: string;
   }
 ) {
@@ -98,7 +100,19 @@ export async function exportP2HToExcel(
   title2.alignment = { vertical: "middle", horizontal: "center" };
   worksheet.getRow(2).height = 24;
 
+  const dateRangeStr =
+    filters?.startDate && filters?.endDate
+      ? filters.startDate === filters.endDate
+        ? `Tgl: ${filters.startDate}`
+        : `Periode: ${filters.startDate} s/d ${filters.endDate}`
+      : filters?.startDate
+      ? `Dari: ${filters.startDate}`
+      : filters?.endDate
+      ? `Sampai: ${filters.endDate}`
+      : "Semua Tanggal";
+
   const filterSummary = [
+    dateRangeStr,
     filters?.category ? `Kategori: ${filters.category.replace(/_/g, " ")}` : "Semua Kategori",
     filters?.shift ? `Shift: ${filters.shift}` : "Semua Shift",
     filters?.section ? `Section: ${filters.section}` : "Semua Section",

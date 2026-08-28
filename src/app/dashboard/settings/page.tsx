@@ -37,8 +37,12 @@ import {
   Droplets,
   Zap,
   Wind,
+  Camera,
+  Upload,
+  Trash2,
 } from "lucide-react";
-import { getAuthSession } from "@/services/auth.service";
+import { getAuthSession, updateAuthUserAvatar } from "@/services/auth.service";
+import { uploadUserAvatar, deleteUserAvatar } from "@/services/user.service";
 import {
   fetchCurrentProfile,
   updateCurrentProfile,
@@ -267,6 +271,57 @@ export default function SettingsPage() {
     }
   };
 
+  // Avatar Upload States & Handlers
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState<boolean>(false);
+
+  const handleAvatarUpload = async (file: File) => {
+    if (!file) return;
+    setIsUploadingAvatar(true);
+    try {
+      const res = await uploadUserAvatar(file, userProfile?.id);
+      showAlertSuccess(
+        "Foto Berhasil Diunggah",
+        "Foto profil avatar Anda telah disimpan di Cloudinary (folder: p2h-app/user-avatar)."
+      );
+      setUserProfile((prev: any) => ({ ...prev, avatar: res.avatarUrl }));
+      updateAuthUserAvatar(res.avatarUrl);
+      showToast("Avatar profil diperbarui", "success");
+    } catch (err: any) {
+      showAlertError(
+        "Gagal Mengunggah Foto",
+        err.message || "Terjadi kesalahan saat mengunggah foto ke Cloudinary."
+      );
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleAvatarDelete = async () => {
+    const isConfirmed = await showConfirmDialog({
+      title: "Hapus Foto Profil?",
+      text: "Foto profil avatar Anda akan dihapus dan kembali menggunakan inisial nama.",
+      confirmButtonText: "Ya, Hapus Foto",
+      isDanger: true,
+    });
+    if (!isConfirmed) return;
+
+    setIsUploadingAvatar(true);
+    try {
+      await deleteUserAvatar(userProfile?.id);
+      showAlertSuccess("Foto Dihapus", "Foto avatar berhasil dihapus.");
+      setUserProfile((prev: any) => ({ ...prev, avatar: null }));
+      updateAuthUserAvatar(null);
+      showToast("Avatar profil dihapus", "info");
+    } catch (err: any) {
+      showAlertError(
+        "Gagal Menghapus Foto",
+        err.message || "Terjadi kesalahan saat menghapus foto avatar."
+      );
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   // Save Operational & Company Config
   const handleSaveConfig = (e: React.FormEvent) => {
     e.preventDefault();
@@ -375,9 +430,73 @@ export default function SettingsPage() {
           {/* Identity Card */}
           <div className="lg:col-span-4 space-y-4">
             <div className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-5 text-center shadow-xl">
-              <div className="relative mx-auto w-20 h-20 rounded-3xl bg-linear-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 text-2xl font-black shadow-lg shadow-amber-500/20">
-                {firstName ? firstName[0].toUpperCase() : "U"}
-                {lastName ? lastName[0].toUpperCase() : ""}
+              {/* Avatar Preview with Hover Camera Overlay */}
+              <div className="relative mx-auto w-24 h-24 rounded-3xl group">
+                {userProfile?.avatar ? (
+                  <img
+                    src={userProfile.avatar}
+                    alt={`${firstName} ${lastName}`}
+                    className="w-24 h-24 rounded-3xl object-cover border-2 border-amber-500/40 shadow-lg shadow-amber-500/10"
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-3xl bg-linear-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 text-3xl font-black shadow-lg shadow-amber-500/20">
+                    {firstName ? firstName[0].toUpperCase() : "U"}
+                    {lastName ? lastName[0].toUpperCase() : ""}
+                  </div>
+                )}
+
+                <label className="absolute inset-0 rounded-3xl bg-slate-950/75 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-[10px] font-semibold">
+                  {isUploadingAvatar ? (
+                    <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
+                  ) : (
+                    <>
+                      <Camera className="w-6 h-6 mb-1 text-amber-400" />
+                      <span>Ganti Foto</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={isUploadingAvatar}
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleAvatarUpload(e.target.files[0]);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              {/* Upload & Delete Buttons */}
+              <div className="flex items-center justify-center gap-2">
+                <label className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-md shadow-amber-500/10">
+                  {isUploadingAvatar ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                  <span>{isUploadingAvatar ? "Mengunggah..." : "Unggah Foto"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={isUploadingAvatar}
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleAvatarUpload(e.target.files[0]);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                </label>
+
+                {userProfile?.avatar && (
+                  <button
+                    type="button"
+                    onClick={handleAvatarDelete}
+                    disabled={isUploadingAvatar}
+                    className="p-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-colors cursor-pointer"
+                    title="Hapus Foto Avatar"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
 
               <div className="space-y-1">

@@ -93,6 +93,9 @@ export default function P2HListPage() {
   const [unitStatusFilter, setUnitStatusFilter] = useState("");
   const [driverStatusFilter, setDriverStatusFilter] = useState("");
 
+  const [startDateFilter, setStartDateFilter] = useState("");
+  const [endDateFilter, setEndDateFilter] = useState("");
+
   // Pagination State
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -125,7 +128,7 @@ export default function P2HListPage() {
   useEffect(() => {
     const session = getAuthSession();
     setUser(session.user);
-    loadData(1, limit, "", "", "", "", "", "");
+    loadData(1, limit, "", "", "", "", "", "", "", "");
   }, []);
 
   const loadData = async (
@@ -136,7 +139,9 @@ export default function P2HListPage() {
     targetSection = sectionFilter,
     targetUnitStatus = unitStatusFilter,
     targetDriverStatus = driverStatusFilter,
-    targetSearch = search
+    targetSearch = search,
+    targetStartDate = startDateFilter,
+    targetEndDate = endDateFilter
   ) => {
     setIsLoading(true);
     try {
@@ -148,6 +153,8 @@ export default function P2HListPage() {
           section: targetSection || undefined,
           unitStatus: targetUnitStatus || undefined,
           driverStatus: targetDriverStatus || undefined,
+          startDate: targetStartDate || undefined,
+          endDate: targetEndDate || undefined,
           page: pageToLoad,
           limit: limitToLoad,
         }),
@@ -178,31 +185,73 @@ export default function P2HListPage() {
   const handleCategoryChange = (newCat: string) => {
     setCategoryFilter(newCat);
     setPage(1);
-    loadData(1, limit, newCat, shiftFilter, sectionFilter, unitStatusFilter, driverStatusFilter, search);
+    loadData(1, limit, newCat, shiftFilter, sectionFilter, unitStatusFilter, driverStatusFilter, search, startDateFilter, endDateFilter);
   };
 
   const handleShiftChange = (newShift: string) => {
     setShiftFilter(newShift);
     setPage(1);
-    loadData(1, limit, categoryFilter, newShift, sectionFilter, unitStatusFilter, driverStatusFilter, search);
+    loadData(1, limit, categoryFilter, newShift, sectionFilter, unitStatusFilter, driverStatusFilter, search, startDateFilter, endDateFilter);
   };
 
   const handleSectionChange = (newSec: string) => {
     setSectionFilter(newSec);
     setPage(1);
-    loadData(1, limit, categoryFilter, shiftFilter, newSec, unitStatusFilter, driverStatusFilter, search);
+    loadData(1, limit, categoryFilter, shiftFilter, newSec, unitStatusFilter, driverStatusFilter, search, startDateFilter, endDateFilter);
   };
 
   const handleUnitStatusChange = (newStat: string) => {
     setUnitStatusFilter(newStat);
     setPage(1);
-    loadData(1, limit, categoryFilter, shiftFilter, sectionFilter, newStat, driverStatusFilter, search);
+    loadData(1, limit, categoryFilter, shiftFilter, sectionFilter, newStat, driverStatusFilter, search, startDateFilter, endDateFilter);
+  };
+
+  const handleStartDateChange = (newDate: string) => {
+    setStartDateFilter(newDate);
+    setPage(1);
+    loadData(1, limit, categoryFilter, shiftFilter, sectionFilter, unitStatusFilter, driverStatusFilter, search, newDate, endDateFilter);
+  };
+
+  const handleEndDateChange = (newDate: string) => {
+    setEndDateFilter(newDate);
+    setPage(1);
+    loadData(1, limit, categoryFilter, shiftFilter, sectionFilter, unitStatusFilter, driverStatusFilter, search, startDateFilter, newDate);
+  };
+
+  const handleQuickDateFilter = (preset: "today" | "last7" | "thisMonth" | "all") => {
+    setPage(1);
+    const now = new Date();
+    if (preset === "all") {
+      setStartDateFilter("");
+      setEndDateFilter("");
+      loadData(1, limit, categoryFilter, shiftFilter, sectionFilter, unitStatusFilter, driverStatusFilter, search, "", "");
+    } else if (preset === "today") {
+      const todayStr = now.toISOString().split("T")[0];
+      setStartDateFilter(todayStr);
+      setEndDateFilter(todayStr);
+      loadData(1, limit, categoryFilter, shiftFilter, sectionFilter, unitStatusFilter, driverStatusFilter, search, todayStr, todayStr);
+    } else if (preset === "last7") {
+      const pastDate = new Date();
+      pastDate.setDate(now.getDate() - 7);
+      const startStr = pastDate.toISOString().split("T")[0];
+      const endStr = now.toISOString().split("T")[0];
+      setStartDateFilter(startStr);
+      setEndDateFilter(endStr);
+      loadData(1, limit, categoryFilter, shiftFilter, sectionFilter, unitStatusFilter, driverStatusFilter, search, startStr, endStr);
+    } else if (preset === "thisMonth") {
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startStr = firstDay.toISOString().split("T")[0];
+      const endStr = now.toISOString().split("T")[0];
+      setStartDateFilter(startStr);
+      setEndDateFilter(endStr);
+      loadData(1, limit, categoryFilter, shiftFilter, sectionFilter, unitStatusFilter, driverStatusFilter, search, startStr, endStr);
+    }
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
-    loadData(1, limit, categoryFilter, shiftFilter, sectionFilter, unitStatusFilter, driverStatusFilter, search);
+    loadData(1, limit, categoryFilter, shiftFilter, sectionFilter, unitStatusFilter, driverStatusFilter, search, startDateFilter, endDateFilter);
   };
 
   const handleResetFilters = () => {
@@ -212,8 +261,10 @@ export default function P2HListPage() {
     setSectionFilter("");
     setUnitStatusFilter("");
     setDriverStatusFilter("");
+    setStartDateFilter("");
+    setEndDateFilter("");
     setPage(1);
-    loadData(1, limit, "", "", "", "", "", "");
+    loadData(1, limit, "", "", "", "", "", "", "", "");
   };
 
   const handleExportExcel = async () => {
@@ -226,6 +277,8 @@ export default function P2HListPage() {
         section: sectionFilter || undefined,
         unitStatus: unitStatusFilter || undefined,
         driverStatus: driverStatusFilter || undefined,
+        startDate: startDateFilter || undefined,
+        endDate: endDateFilter || undefined,
         page: 1,
         limit: 5000,
       });
@@ -242,6 +295,8 @@ export default function P2HListPage() {
         shift: shiftFilter,
         section: sectionFilter,
         unitStatus: unitStatusFilter,
+        startDate: startDateFilter,
+        endDate: endDateFilter,
         search: search,
       });
 
@@ -460,6 +515,26 @@ export default function P2HListPage() {
           </div>
 
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full lg:w-auto">
+            {/* Date Range Filter */}
+            <div className="flex-1 sm:flex-initial flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 rounded-xl px-2.5 py-2 sm:py-1.5">
+              <Calendar className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <input
+                type="date"
+                value={startDateFilter}
+                onChange={(e) => handleStartDateChange(e.target.value)}
+                className="bg-transparent text-xs text-slate-200 focus:outline-none cursor-pointer scheme-dark"
+                title="Dari Tanggal"
+              />
+              <span className="text-slate-500 text-xs font-semibold">s/d</span>
+              <input
+                type="date"
+                value={endDateFilter}
+                onChange={(e) => handleEndDateChange(e.target.value)}
+                className="bg-transparent text-xs text-slate-200 focus:outline-none cursor-pointer scheme-dark"
+                title="Sampai Tanggal"
+              />
+            </div>
+
             {/* Category Filter Dropdown */}
             <div className="flex-1 sm:flex-initial flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 sm:py-1.5 min-w-35">
               <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -524,7 +599,7 @@ export default function P2HListPage() {
             </div>
 
             {/* Reset Filter Button */}
-            {(categoryFilter || shiftFilter || sectionFilter || unitStatusFilter || search) && (
+            {(categoryFilter || shiftFilter || sectionFilter || unitStatusFilter || startDateFilter || endDateFilter || search) && (
               <button
                 type="button"
                 onClick={handleResetFilters}
@@ -539,7 +614,7 @@ export default function P2HListPage() {
             {/* Refresh Button */}
             <button
               type="button"
-              onClick={() => loadData(page, limit, categoryFilter, shiftFilter, sectionFilter, unitStatusFilter, driverStatusFilter, search)}
+              onClick={() => loadData(page, limit, categoryFilter, shiftFilter, sectionFilter, unitStatusFilter, driverStatusFilter, search, startDateFilter, endDateFilter)}
               disabled={isLoading}
               className="p-2.5 sm:p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
               title="Segarkan Data"
@@ -549,39 +624,91 @@ export default function P2HListPage() {
           </div>
         </form>
 
-        {/* Quick Category Chips / Pills */}
-        <div className="pt-2.5 border-t border-slate-800/70 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-700">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 shrink-0">
-            Kategori:
-          </span>
-          <button
-            type="button"
-            onClick={() => handleCategoryChange("")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-              categoryFilter === ""
-                ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-bold"
-                : "bg-slate-950/80 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700"
-            }`}
-          >
-            Semua
-          </button>
-          {CATEGORIES.map((cat) => {
-            const isActive = categoryFilter === cat.value;
-            return (
-              <button
-                key={cat.value}
-                type="button"
-                onClick={() => handleCategoryChange(cat.value)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                  isActive
-                    ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-bold"
-                    : "bg-slate-950/80 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700"
-                }`}
-              >
-                {cat.label}
-              </button>
-            );
-          })}
+        {/* Quick Date Range Chips & Category Chips */}
+        <div className="space-y-2 pt-2 border-t border-slate-800/70">
+          {/* Quick Date Presets */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-thin scrollbar-thumb-slate-700">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 shrink-0 flex items-center gap-1">
+              <Calendar className="w-3 h-3 text-amber-400" />
+              Periode:
+            </span>
+            <button
+              type="button"
+              onClick={() => handleQuickDateFilter("all")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                !startDateFilter && !endDateFilter
+                  ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-bold"
+                  : "bg-slate-950/80 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700"
+              }`}
+            >
+              Semua Tanggal
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickDateFilter("today")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                startDateFilter && startDateFilter === endDateFilter && startDateFilter === new Date().toISOString().split("T")[0]
+                  ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-bold"
+                  : "bg-slate-950/80 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700"
+              }`}
+            >
+              Hari Ini
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickDateFilter("last7")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                startDateFilter && endDateFilter && startDateFilter !== endDateFilter
+                  ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-bold"
+                  : "bg-slate-950/80 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700"
+              }`}
+            >
+              7 Hari Terakhir
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickDateFilter("thisMonth")}
+              className="px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer bg-slate-950/80 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700"
+            >
+              Bulan Ini
+            </button>
+          </div>
+
+          {/* Quick Category Chips / Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-700">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 shrink-0 flex items-center gap-1">
+              <Truck className="w-3 h-3 text-amber-400" />
+              Kategori:
+            </span>
+            <button
+              type="button"
+              onClick={() => handleCategoryChange("")}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                categoryFilter === ""
+                  ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-bold"
+                  : "bg-slate-950/80 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700"
+              }`}
+            >
+              Semua
+            </button>
+            {CATEGORIES.map((cat) => {
+              const isActive = categoryFilter === cat.value;
+              return (
+                <button
+                  key={cat.value}
+                  type="button"
+                  onClick={() => handleCategoryChange(cat.value)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-bold"
+                      : "bg-slate-950/80 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700"
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
