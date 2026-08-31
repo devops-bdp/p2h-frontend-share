@@ -118,8 +118,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-screen w-72 max-w-xs md:w-64 border-r border-slate-800/80 bg-slate-950 flex flex-col justify-between transition-transform duration-300 ease-in-out md:translate-x-0 ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed top-0 left-0 z-50 md:z-40 h-screen w-64 border-r border-slate-800/80 bg-slate-950 flex flex-col justify-between transition-transform duration-300 ease-in-out md:translate-x-0 ${
+          isOpen ? "translate-x-0 shadow-2xl shadow-black/80" : "-translate-x-full"
         }`}
       >
         {/* Top Section: Brand & User Profile */}

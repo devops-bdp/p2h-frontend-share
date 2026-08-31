@@ -840,7 +840,7 @@ export default function SettingsPage() {
                 <div>
                   <h4 className="font-bold text-white uppercase tracking-wider flex items-center gap-2 text-xs">
                     <KeyRound className="w-4 h-4 text-amber-400" />
-                    <span>Daftar Token Akses Publik Khusus Tiap Kategori Armada (6 Kategori)</span>
+                    <span>Daftar Token Akses Publik Khusus Tiap Kategori Armada (7 Kategori)</span>
                   </h4>
                   <p className="text-[11px] text-slate-400 mt-0.5">
                     Setiap kategori kendaraan memiliki token autentikasi tersendiri untuk keamanan dan isolasi pengisian form.
@@ -859,6 +859,16 @@ export default function SettingsPage() {
                     theme: "border-sky-500/30 text-sky-400 bg-sky-500/10",
                     badge: "bg-sky-500/20 text-sky-300",
                     link: "/p2h/form?category=LIGHT_VECHICLE",
+                  },
+                  {
+                    category: "DUMP_TRUCK",
+                    code: "P2H-DT",
+                    name: "Dump Truck (DT)",
+                    token: "#BATARADT2026",
+                    icon: Truck,
+                    theme: "border-orange-500/30 text-orange-400 bg-orange-500/10",
+                    badge: "bg-orange-500/20 text-orange-300",
+                    link: "/p2h/form?category=DUMP_TRUCK",
                   },
                   {
                     category: "TELEHENDLER",
@@ -1337,7 +1347,7 @@ export default function SettingsPage() {
 
                 <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-center">
                   <span className="text-2xl font-black text-emerald-400 font-mono block">
-                    6
+                    7
                   </span>
                   <span className="text-[11px] text-slate-400">Kategori Didukung</span>
                 </div>

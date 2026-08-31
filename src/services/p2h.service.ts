@@ -11,6 +11,7 @@ export const CATEGORY_PUBLIC_TOKENS: Record<string, string> = {
   FUEL_TRUCK: "#BATARAFT2026",
   GENSET: "#BATARAGS2026",
   COMPRESSOR: "#BATARACP2026",
+  DUMP_TRUCK: "#BATARADT2026",
 };
 
 export function getPublicTokenForCategory(category?: string): string {
@@ -357,6 +358,81 @@ export const BAKU_COMPRESSOR_LISTRIK_CHECKS: CompressorCheckItem[] = [
   { id: 9, category: "COMPRESSOR LISTRIK", item: "Periksa Selang / Sambungan angin", condition: "BAIK" },
 ];
 
+// ================= FORM BAKU DUMP TRUCK (33 ITEMS DALAM 6 KATEGORI) =================
+export type DumpTruckCondition = "BAIK" | "RUSAK" | "NORMAL" | "TIDAK BAIK" | "PERLU TINDAKAN";
+
+export interface DumpTruckCheckItem {
+  id: number;
+  category: string;
+  item: string;
+  condition: DumpTruckCondition;
+  note?: string;
+}
+
+export const DUMP_TRUCK_CATEGORIES = [
+  { id: "cat1", name: "1. Pemeriksaan Fisik Luar, Bodi & Dump Vessel (6 Item)" },
+  { id: "cat2", name: "2. Kondisi Ban, Baut Roda & Suspensi (5 Item)" },
+  { id: "cat3", name: "3. Pemeriksaan Mesin & Level Fluida (6 Item)" },
+  { id: "cat4", name: "4. Sistem Hidrolik & Dump Hoist (5 Item)" },
+  { id: "cat5", name: "5. Kabin, Sistem Pengereman & Kemudi (6 Item)" },
+  { id: "cat6", name: "6. Perlengkapan Keselamatan & K3 (5 Item)" },
+];
+
+export const BAKU_DUMP_TRUCK_CHECKS: DumpTruckCheckItem[] = [
+  // 1. Pemeriksaan Fisik Luar, Bodi & Dump Vessel (6 Item)
+  { id: 1, category: "1. Pemeriksaan Fisik Luar, Bodi & Dump Vessel (6 Item)", item: "Kondisi bodi kabin, spion & kaca utuh/bersih", condition: "BAIK" },
+  { id: 2, category: "1. Pemeriksaan Fisik Luar, Bodi & Dump Vessel (6 Item)", item: "Kondisi dump vessel (bak) & subframe", condition: "BAIK" },
+  { id: 3, category: "1. Pemeriksaan Fisik Luar, Bodi & Dump Vessel (6 Item)", item: "Tangga naik kabin & handrail aman", condition: "BAIK" },
+  { id: 4, category: "1. Pemeriksaan Fisik Luar, Bodi & Dump Vessel (6 Item)", item: "Lampu utama, sen, lampu rem, lampu mundur & kerja", condition: "BAIK" },
+  { id: 5, category: "1. Pemeriksaan Fisik Luar, Bodi & Dump Vessel (6 Item)", item: "Rotary lamp / strobe & buggy whip", condition: "BAIK" },
+  { id: 6, category: "1. Pemeriksaan Fisik Luar, Bodi & Dump Vessel (6 Item)", item: "Klakson & alarm mundur berfungsi", condition: "BAIK" },
+
+  // 2. Kondisi Ban, Baut Roda & Suspensi (5 Item)
+  { id: 7, category: "2. Kondisi Ban, Baut Roda & Suspensi (5 Item)", item: "Kondisi tapak ban depan & belakang (tidak aus/sobek)", condition: "BAIK" },
+  { id: 8, category: "2. Kondisi Ban, Baut Roda & Suspensi (5 Item)", item: "Tekanan angin ban depan & belakang tandem", condition: "BAIK" },
+  { id: 9, category: "2. Kondisi Ban, Baut Roda & Suspensi (5 Item)", item: "Baut roda (wheel nut) lengkap & kencang", condition: "BAIK" },
+  { id: 10, category: "2. Kondisi Ban, Baut Roda & Suspensi (5 Item)", item: "Kondisi spring / per daun, trunnion & torque rod", condition: "BAIK" },
+  { id: 11, category: "2. Kondisi Ban, Baut Roda & Suspensi (5 Item)", item: "Kerapian & pelindung lumpur (mud flap / rock ejector)", condition: "BAIK" },
+
+  // 3. Pemeriksaan Mesin & Level Fluida (6 Item)
+  { id: 12, category: "3. Pemeriksaan Mesin & Level Fluida (6 Item)", item: "Level oli mesin (engine oil dipstick)", condition: "BAIK" },
+  { id: 13, category: "3. Pemeriksaan Mesin & Level Fluida (6 Item)", item: "Level air radiator & coolant reservoir", condition: "BAIK" },
+  { id: 14, category: "3. Pemeriksaan Mesin & Level Fluida (6 Item)", item: "Level minyak rem & minyak kopling", condition: "BAIK" },
+  { id: 15, category: "3. Pemeriksaan Mesin & Level Fluida (6 Item)", item: "Level oli power steering", condition: "BAIK" },
+  { id: 16, category: "3. Pemeriksaan Mesin & Level Fluida (6 Item)", item: "Kondisi baterai / accu & kabel terminal", condition: "BAIK" },
+  { id: 17, category: "3. Pemeriksaan Mesin & Level Fluida (6 Item)", item: "Tidak ada kebocoran oli, solar atau air di bawah unit", condition: "BAIK" },
+
+  // 4. Sistem Hidrolik & Dump Hoist (5 Item)
+  { id: 18, category: "4. Sistem Hidrolik & Dump Hoist (5 Item)", item: "Level oli hidrolik dump", condition: "BAIK" },
+  { id: 19, category: "4. Sistem Hidrolik & Dump Hoist (5 Item)", item: "Silinder hidrolik hoist (tidak baret / bocor oli)", condition: "BAIK" },
+  { id: 20, category: "4. Sistem Hidrolik & Dump Hoist (5 Item)", item: "Selang hidrolik & sambungan fitting", condition: "BAIK" },
+  { id: 21, category: "4. Sistem Hidrolik & Dump Hoist (5 Item)", item: "Fungsi tuas kontrol hoist dump (Up, Hold, Lower)", condition: "BAIK" },
+  { id: 22, category: "4. Sistem Hidrolik & Dump Hoist (5 Item)", item: "Safety prop / penahan bak dump berfungsi", condition: "BAIK" },
+
+  // 5. Kabin, Sistem Pengereman & Kemudi (6 Item)
+  { id: 23, category: "5. Kabin, Sistem Pengereman & Kemudi (6 Item)", item: "Kursi pengemudi & seatbelt berfungsi", condition: "BAIK" },
+  { id: 24, category: "5. Kabin, Sistem Pengereman & Kemudi (6 Item)", item: "Panel indikator, display & pressure gauge angin", condition: "BAIK" },
+  { id: 25, category: "5. Kabin, Sistem Pengereman & Kemudi (6 Item)", item: "Fungsi rem utama (service brake / pedal rem angin)", condition: "BAIK" },
+  { id: 26, category: "5. Kabin, Sistem Pengereman & Kemudi (6 Item)", item: "Fungsi rem parkir (parking brake) & exhaust brake", condition: "BAIK" },
+  { id: 27, category: "5. Kabin, Sistem Pengereman & Kemudi (6 Item)", item: "Sistem kemudi (steering) normal tanpa speling berlebih", condition: "BAIK" },
+  { id: 28, category: "5. Kabin, Sistem Pengereman & Kemudi (6 Item)", item: "Wiper dan air washer kaca depan", condition: "BAIK" },
+
+  // 6. Perlengkapan Keselamatan & K3 (5 Item)
+  { id: 29, category: "6. Perlengkapan Keselamatan & K3 (5 Item)", item: "APAR 6 kg terpasang & bertekanan baik", condition: "BAIK" },
+  { id: 30, category: "6. Perlengkapan Keselamatan & K3 (5 Item)", item: "Kotak P3K lengkap", condition: "BAIK" },
+  { id: 31, category: "6. Perlengkapan Keselamatan & K3 (5 Item)", item: "Segitiga pengaman & wheel chock (ganjal ban)", condition: "BAIK" },
+  { id: 32, category: "6. Perlengkapan Keselamatan & K3 (5 Item)", item: "Radio komunikasi (Rig 2 arah) berfungsi", condition: "BAIK" },
+  { id: 33, category: "6. Perlengkapan Keselamatan & K3 (5 Item)", item: "Sabuk pengaman wajib terpasang saat operasi", condition: "BAIK" },
+];
+
+export const BAKU_DUMP_TRUCK_FIT_TO_WORK: FitToWorkItem[] = [
+  { question: "Apakah Anda cukup tidur (minimal 6 jam)?", answer: "YA" },
+  { question: "Apakah kondisi fisik Anda sehat & fit untuk mengemudi?", answer: "YA" },
+  { question: "Apakah Anda tidak meminum obat yang menyebabkan kantuk?", answer: "YA" },
+  { question: "Apakah Anda menggunakan APD lengkap & membawa SIMPER aktif?", answer: "YA" },
+  { question: "Apakah Anda siap mematuhi batas kecepatan & rambu tambang?", answer: "YA" },
+];
+
 export type P2HStatus = "LAYAK" | "TIDAK_LAYAK" | "SIAP" | "TIDAK_SIAP";
 export type ShiftType = "PAGI" | "MALAM" | "SIANG";
 
@@ -394,7 +470,7 @@ export interface P2HInspection {
   date: string;
   km: number;
   hourMeter: number | null;
-  damageChecks: (DamageCheckItem | TelehandlerCheckItem | StoringTruckCheckItem | FuelTruckCheckItem | GensetCheckItem)[];
+  damageChecks: (DamageCheckItem | TelehandlerCheckItem | StoringTruckCheckItem | FuelTruckCheckItem | GensetCheckItem | DumpTruckCheckItem)[];
   tyreCheck: TyreCheckData;
   safetyTools: SafetyToolItem[];
   fitToWork: FitToWorkItem[];
@@ -418,7 +494,7 @@ export interface P2HInput {
   shift: ShiftType;
   km: number;
   hourMeter?: number | null;
-  damageChecks: (DamageCheckItem | TelehandlerCheckItem | StoringTruckCheckItem | FuelTruckCheckItem | GensetCheckItem)[];
+  damageChecks: (DamageCheckItem | TelehandlerCheckItem | StoringTruckCheckItem | FuelTruckCheckItem | GensetCheckItem | DumpTruckCheckItem)[];
   tyreCheck: TyreCheckData;
   safetyTools: SafetyToolItem[];
   fitToWork: FitToWorkItem[];

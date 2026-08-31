@@ -61,18 +61,19 @@ import { getAuthSession } from "@/services/auth.service";
 import Pagination from "@/components/Pagination";
 
 const CATEGORIES = [
-  { value: "LIGHT_VECHICLE", label: "Light Vehicle (LV)" },
-  { value: "TELEHENDLER", label: "Telehandler" },
-  { value: "STORING_TRUCK", label: "Storing Truck" },
-  { value: "FUEL_TRUCK", label: "Fuel Truck" },
-  { value: "GENSET", label: "Genset" },
-  { value: "COMPRESSOR", label: "Compressor" },
-  { value: "EXCAVATOR", label: "Excavator" },
-  { value: "DOZER", label: "Dozer" },
-  { value: "COMPACTOR", label: "Compactor" },
-  { value: "CRANE_TRUCK", label: "Crane Truck" },
-  { value: "MOBILE_CRANE", label: "Mobile Crane" },
-  { value: "AMBULANCE", label: "Ambulance" },
+  { value: "LIGHT_VECHICLE", label: "Light Vehicle (LV)", icon: "🚗" },
+  { value: "DUMP_TRUCK", label: "Dump Truck (DT)", icon: "🚛" },
+  { value: "TELEHENDLER", label: "Telehandler", icon: "🚜" },
+  { value: "STORING_TRUCK", label: "Storing Truck", icon: "🚚" },
+  { value: "FUEL_TRUCK", label: "Fuel Truck", icon: "⛽" },
+  { value: "GENSET", label: "Genset", icon: "⚡" },
+  { value: "COMPRESSOR", label: "Compressor", icon: "💨" },
+  { value: "EXCAVATOR", label: "Excavator", icon: "⛏️" },
+  { value: "DOZER", label: "Dozer", icon: "🚜" },
+  { value: "COMPACTOR", label: "Compactor", icon: "🚜" },
+  { value: "CRANE_TRUCK", label: "Crane Truck", icon: "🏗️" },
+  { value: "MOBILE_CRANE", label: "Mobile Crane", icon: "🏗️" },
+  { value: "AMBULANCE", label: "Ambulance", icon: "🚑" },
 ];
 
 export default function P2HListPage() {
@@ -698,13 +699,14 @@ export default function P2HListPage() {
                   key={cat.value}
                   type="button"
                   onClick={() => handleCategoryChange(cat.value)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
                     isActive
                       ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-bold"
                       : "bg-slate-950/80 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700"
                   }`}
                 >
-                  {cat.label}
+                  <span>{cat.icon}</span>
+                  <span>{cat.label}</span>
                 </button>
               );
             })}
@@ -773,7 +775,9 @@ export default function P2HListPage() {
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2">
                           <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
-                            item.unit?.category === "TELEHENDLER"
+                            item.unit?.category === "DUMP_TRUCK"
+                              ? "bg-orange-500/15 border-orange-500/30 text-orange-400"
+                              : item.unit?.category === "TELEHENDLER"
                               ? "bg-amber-500/15 border-amber-500/30 text-amber-400"
                               : item.unit?.category === "STORING_TRUCK"
                               ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
@@ -785,7 +789,9 @@ export default function P2HListPage() {
                               ? "bg-teal-500/15 border-teal-500/30 text-teal-400"
                               : "bg-sky-500/15 border-sky-500/30 text-sky-400"
                           }`}>
-                            {item.unit?.category === "TELEHENDLER" ? (
+                            {item.unit?.category === "DUMP_TRUCK" ? (
+                              <Truck className="w-3.5 h-3.5 text-orange-400" />
+                            ) : item.unit?.category === "TELEHENDLER" ? (
                               <Wrench className="w-3.5 h-3.5" />
                             ) : item.unit?.category === "STORING_TRUCK" ? (
                               <Truck className="w-3.5 h-3.5" />
@@ -802,7 +808,11 @@ export default function P2HListPage() {
                           <div>
                             <div className="flex items-center gap-1.5">
                               <span className="font-bold text-white font-mono">{item.unit?.unitNo || "-"}</span>
-                              {item.unit?.category === "TELEHENDLER" ? (
+                              {item.unit?.category === "DUMP_TRUCK" ? (
+                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-orange-500/20 text-orange-300 font-bold border border-orange-500/30">
+                                  DT
+                                </span>
+                              ) : item.unit?.category === "TELEHENDLER" ? (
                                 <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
                                   TH
                                 </span>

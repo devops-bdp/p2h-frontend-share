@@ -21,7 +21,7 @@ export interface DefectItem {
   driverNrp: number | null;
   unitId: number;
   unitNo: string;
-  category: "LIGHT_VECHICLE" | "TELEHENDLER" | "STORING_TRUCK" | "FUEL_TRUCK" | "GENSET" | "COMPRESSOR" | string;
+  category: "LIGHT_VECHICLE" | "TELEHENDLER" | "STORING_TRUCK" | "FUEL_TRUCK" | "GENSET" | "COMPRESSOR" | "DUMP_TRUCK" | string;
   brand: string;
   description: string;
   km: number;
@@ -56,6 +56,7 @@ export interface DefectStats {
     FUEL_TRUCK: number;
     GENSET: number;
     COMPRESSOR: number;
+    DUMP_TRUCK: number;
     [key: string]: number;
   };
 }

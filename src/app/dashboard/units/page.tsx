@@ -51,19 +51,104 @@ import Pagination from "@/components/Pagination";
 import { exportUnitsToExcel } from "@/lib/excel-export";
 
 const CATEGORIES = [
-  { value: "LIGHT_VECHICLE", label: "Light Vehicle (LV)" },
-  { value: "TELEHENDLER", label: "Telehandler" },
-  { value: "STORING_TRUCK", label: "Storing Truck" },
-  { value: "FUEL_TRUCK", label: "Fuel Truck" },
-  { value: "GENSET", label: "Genset" },
-  { value: "COMPRESSOR", label: "Compressor" },
-  { value: "EXCAVATOR", label: "Excavator" },
-  { value: "DOZER", label: "Dozer" },
-  { value: "COMPACTOR", label: "Compactor" },
-  { value: "CRANE_TRUCK", label: "Crane Truck" },
-  { value: "MOBILE_CRANE", label: "Mobile Crane" },
-  { value: "AMBULANCE", label: "Ambulance" },
+  { value: "LIGHT_VECHICLE", label: "Light Vehicle (LV)", icon: "🚗" },
+  { value: "DUMP_TRUCK", label: "Dump Truck (DT)", icon: "🚛" },
+  { value: "TELEHENDLER", label: "Telehandler", icon: "🚜" },
+  { value: "STORING_TRUCK", label: "Storing Truck", icon: "🚚" },
+  { value: "FUEL_TRUCK", label: "Fuel Truck", icon: "⛽" },
+  { value: "GENSET", label: "Genset", icon: "⚡" },
+  { value: "COMPRESSOR", label: "Compressor", icon: "💨" },
+  { value: "EXCAVATOR", label: "Excavator", icon: "⛏️" },
+  { value: "DOZER", label: "Dozer", icon: "🚜" },
+  { value: "COMPACTOR", label: "Compactor", icon: "🚜" },
+  { value: "CRANE_TRUCK", label: "Crane Truck", icon: "🏗️" },
+  { value: "MOBILE_CRANE", label: "Mobile Crane", icon: "🏗️" },
+  { value: "AMBULANCE", label: "Ambulance", icon: "🚑" },
 ];
+
+const getCategoryStyle = (category: string) => {
+  switch (category) {
+    case "DUMP_TRUCK":
+      return {
+        label: "Dump Truck (DT)",
+        badge: "bg-orange-500/15 text-orange-300 border-orange-500/30",
+        icon: "🚛",
+      };
+    case "TELEHENDLER":
+      return {
+        label: "Telehandler (TH)",
+        badge: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+        icon: "🚜",
+      };
+    case "STORING_TRUCK":
+      return {
+        label: "Storing Truck (ST)",
+        badge: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+        icon: "🚚",
+      };
+    case "FUEL_TRUCK":
+      return {
+        label: "Fuel Truck (FT)",
+        badge: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
+        icon: "⛽",
+      };
+    case "GENSET":
+      return {
+        label: "Genset (GS)",
+        badge: "bg-yellow-500/15 text-yellow-300 border-yellow-500/30",
+        icon: "⚡",
+      };
+    case "COMPRESSOR":
+      return {
+        label: "Compressor (CP)",
+        badge: "bg-teal-500/15 text-teal-300 border-teal-500/30",
+        icon: "💨",
+      };
+    case "EXCAVATOR":
+      return {
+        label: "Excavator (EX)",
+        badge: "bg-indigo-500/15 text-indigo-300 border-indigo-500/30",
+        icon: "⛏️",
+      };
+    case "DOZER":
+      return {
+        label: "Dozer (DZ)",
+        badge: "bg-amber-600/15 text-amber-300 border-amber-600/30",
+        icon: "🚜",
+      };
+    case "COMPACTOR":
+      return {
+        label: "Compactor (CMP)",
+        badge: "bg-blue-500/15 text-blue-300 border-blue-500/30",
+        icon: "🚜",
+      };
+    case "CRANE_TRUCK":
+      return {
+        label: "Crane Truck (CT)",
+        badge: "bg-purple-500/15 text-purple-300 border-purple-500/30",
+        icon: "🏗️",
+      };
+    case "MOBILE_CRANE":
+      return {
+        label: "Mobile Crane (MC)",
+        badge: "bg-violet-500/15 text-violet-300 border-violet-500/30",
+        icon: "🏗️",
+      };
+    case "AMBULANCE":
+      return {
+        label: "Ambulance (AMB)",
+        badge: "bg-rose-500/15 text-rose-300 border-rose-500/30",
+        icon: "🚑",
+      };
+    case "LIGHT_VECHICLE":
+    default:
+      return {
+        label: "Light Vehicle (LV)",
+        badge: "bg-sky-500/15 text-sky-300 border-sky-500/30",
+        icon: "🚗",
+      };
+  }
+};
 
 export default function UnitsPage() {
   const [units, setUnits] = useState<Unit[]>([]);
@@ -659,7 +744,7 @@ export default function UnitsPage() {
         </form>
 
         {/* Quick Category Chips / Pills */}
-        <div className="pt-2.5 border-t border-slate-800/70 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-700">
+        <div className="pt-2.5 border-t border-slate-800/70 flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-thin scrollbar-thumb-slate-700">
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 shrink-0">
             Kategori:
           </span>
@@ -688,6 +773,7 @@ export default function UnitsPage() {
                     : "bg-slate-950/80 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700"
                 }`}
               >
+                <span>{cat.icon}</span>
                 <span>{cat.label}</span>
                 {count > 0 && (
                   <span
@@ -711,7 +797,7 @@ export default function UnitsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-950/60 text-slate-400 font-semibold uppercase tracking-wider">
+              <tr className="border-b border-slate-800 bg-slate-950/70 text-slate-400 font-semibold uppercase tracking-wider">
                 <th className="py-3.5 px-4">No. Lambung</th>
                 <th className="py-3.5 px-4">Kategori Unit</th>
                 <th className="py-3.5 px-4">Merk &amp; Tipe</th>
@@ -741,59 +827,63 @@ export default function UnitsPage() {
                   </td>
                 </tr>
               ) : (
-                paginatedUnits.map((unit) => (
-                  <tr
-                    key={unit.id}
-                    className="hover:bg-slate-800/40 transition-colors group"
-                  >
-                    {/* Unit No */}
-                    <td className="py-3.5 px-4 font-bold text-white">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-                          <Truck className="w-3.5 h-3.5" />
+                paginatedUnits.map((unit) => {
+                  const catStyle = getCategoryStyle(unit.category);
+
+                  return (
+                    <tr
+                      key={unit.id}
+                      className="hover:bg-slate-800/40 transition-colors group"
+                    >
+                      {/* Unit No */}
+                      <td className="py-3.5 px-4 font-bold text-white whitespace-nowrap">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-amber-400 font-mono font-bold text-xs shrink-0 shadow-inner">
+                            {unit.unitNo.slice(0, 2).toUpperCase()}
+                          </div>
+                          <span className="text-sm font-bold text-white font-mono tracking-tight group-hover:text-amber-400 transition-colors">
+                            {unit.unitNo}
+                          </span>
                         </div>
-                        <span className="text-sm text-amber-300 font-mono">
-                          {unit.unitNo}
+                      </td>
+
+                      {/* Category */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border ${catStyle.badge}`}>
+                          <span>{catStyle.icon}</span>
+                          <span>{catStyle.label}</span>
                         </span>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Category */}
-                    <td className="py-3.5 px-4">
-                      <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-xs font-medium border border-slate-700/60">
-                        {unit.category.replace(/_/g, " ")}
-                      </span>
-                    </td>
-
-                    {/* Brand & Description */}
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-slate-200">{unit.brand}</div>
-                      <div className="text-xs text-slate-400 line-clamp-1">
-                        {unit.description}
-                      </div>
-                    </td>
-
-                    {/* Owner */}
-                    <td className="py-3.5 px-4 text-slate-300">
-                      <div className="flex items-center gap-1.5">
-                        <Building2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                        <span>{unit.ownerName}</span>
-                      </div>
-                    </td>
-
-                    {/* KM & HM */}
-                    <td className="py-3.5 px-4 text-slate-300">
-                      <div className="flex items-center gap-1 text-xs">
-                        <Gauge className="w-3 h-3 text-slate-400" />
-                        <span>{unit.km.toLocaleString()} KM</span>
-                      </div>
-                      {unit.hourMeter !== null && (
-                        <div className="flex items-center gap-1 text-xs text-slate-400">
-                          <Clock className="w-3 h-3 text-slate-500" />
-                          <span>{unit.hourMeter.toLocaleString()} HM</span>
+                      {/* Brand & Description */}
+                      <td className="py-3.5 px-4">
+                        <div className="font-semibold text-slate-200">{unit.brand}</div>
+                        <div className="text-xs text-slate-400 line-clamp-1">
+                          {unit.description || "-"}
                         </div>
-                      )}
-                    </td>
+                      </td>
+
+                      {/* Owner */}
+                      <td className="py-3.5 px-4 text-slate-300 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <Building2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                          <span className="truncate max-w-44">{unit.ownerName}</span>
+                        </div>
+                      </td>
+
+                      {/* KM & HM */}
+                      <td className="py-3.5 px-4 text-slate-300 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 text-xs font-mono">
+                          <Gauge className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{unit.km.toLocaleString()} KM</span>
+                        </div>
+                        {unit.hourMeter !== null && (
+                          <div className="flex items-center gap-1.5 text-xs text-slate-400 font-mono mt-0.5">
+                            <Clock className="w-3.5 h-3.5 text-slate-500" />
+                            <span>{unit.hourMeter.toLocaleString()} HM</span>
+                          </div>
+                        )}
+                      </td>
 
                     {/* Status */}
                     <td className="py-3.5 px-4">
@@ -829,8 +919,9 @@ export default function UnitsPage() {
                         </button>
                       </div>
                     </td>
-                  </tr>
-                ))
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

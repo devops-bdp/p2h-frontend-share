@@ -35,7 +35,7 @@ import { showToast } from "@/lib/swal";
 
 interface CategoryCardItem {
   id: string;
-  category: "LIGHT_VECHICLE" | "TELEHENDLER" | "STORING_TRUCK" | "FUEL_TRUCK" | "GENSET" | "COMPRESSOR";
+  category: "LIGHT_VECHICLE" | "TELEHENDLER" | "STORING_TRUCK" | "FUEL_TRUCK" | "GENSET" | "COMPRESSOR" | "DUMP_TRUCK";
   title: string;
   code: string;
   badge: string;
@@ -83,6 +83,34 @@ const CATEGORY_CARDS: CategoryCardItem[] = [
       "Pemeriksaan Fisik & Tekanan 4 Posisi Ban",
       "6 Perlengkapan Keselamatan (APAR, P3K, Dongkrak)",
       "10 Pertanyaan Fit To Work & PSM Pengemudi",
+    ],
+  },
+  {
+    id: "dump_truck",
+    category: "DUMP_TRUCK",
+    title: "Dump Truck (DT)",
+    code: "P2H-DT",
+    badge: "🚛 HEAVY HAULER",
+    subtitle: "Truk Jungkit, Hauling Truck, Hino / Fuso / Scania Dump",
+    description:
+      "Pemeriksaan harian komprehensif dump truck: mesin, hidrolik hoist dump vessel, sistem rem angin, ban tandem & kelayakan hauling tambang.",
+    itemsCountText: "33 Item Baku (6 Kategori) + KM & Hour Meter",
+    imageSrc: "/card-category/DTCARD.jpeg",
+    icon: Truck,
+    colorScheme: {
+      border: "border-orange-500/40 hover:border-orange-400 group-hover:shadow-orange-500/20",
+      bgGradient: "from-orange-600/30 via-slate-900/50 to-slate-950/90",
+      badgeBg: "bg-orange-500/25 text-orange-200 border-orange-400/40 shadow-sm",
+      iconBg: "bg-orange-500/25 text-orange-300 border-orange-400/40 shadow-md",
+      iconColor: "text-orange-300",
+      btnGradient: "from-orange-400 to-amber-500 hover:from-orange-300 hover:to-amber-400 text-slate-950",
+      glow: "hover:shadow-orange-500/20",
+    },
+    features: [
+      "Walkaround Fisik, Tangga Kabin & Bak Dump Vessel",
+      "Sistem Hidrolik Hoist Tipping & Safety Prop",
+      "Kondisi Ban Tandem, Baut Roda & Suspensi Spring",
+      "Sistem Rem Angin (Pneumatic), Steering & Safety K3",
     ],
   },
   {
@@ -251,6 +279,7 @@ export default function P2HCategorySelectionPage() {
             FUEL_TRUCK: 0,
             GENSET: 0,
             COMPRESSOR: 0,
+            DUMP_TRUCK: 0,
           };
           res.data.units.forEach((u: any) => {
             if (counts[u.category] !== undefined) {

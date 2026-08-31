@@ -71,6 +71,7 @@ export default function DefectsPage() {
       FUEL_TRUCK: 0,
       GENSET: 0,
       COMPRESSOR: 0,
+      DUMP_TRUCK: 0,
     },
   });
   const [units, setUnits] = useState<Unit[]>([]);
@@ -165,6 +166,7 @@ export default function DefectsPage() {
               FUEL_TRUCK: 0,
               GENSET: 0,
               COMPRESSOR: 0,
+              DUMP_TRUCK: 0,
             },
           },
         })),
@@ -387,6 +389,13 @@ export default function DefectsPage() {
   // Helper Badge Renderers
   const getCategoryBadge = (cat: string) => {
     switch (cat) {
+      case "DUMP_TRUCK":
+        return {
+          label: "DT",
+          name: "Dump Truck",
+          badge: "bg-orange-500/15 text-orange-300 border-orange-500/30",
+          icon: <Truck className="w-3.5 h-3.5 text-orange-400" />,
+        };
       case "TELEHENDLER":
         return {
           label: "TH",
@@ -655,8 +664,8 @@ export default function DefectsPage() {
       {/* ================= FILTER & SEARCH TOOLBAR ================= */}
       <div className="p-4 sm:p-5 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-4 shadow-xl">
         {/* Category Filter Pills */}
-        <div className="flex flex-wrap items-center gap-1.5 pb-3 border-b border-slate-800/80">
-          <span className="text-xs font-bold text-slate-400 mr-1 flex items-center gap-1">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-slate-800/80 scrollbar-thin scrollbar-thumb-slate-700">
+          <span className="text-xs font-bold text-slate-400 mr-1 shrink-0 flex items-center gap-1">
             <Layers className="w-3.5 h-3.5 text-amber-400" />
             <span>Kategori:</span>
           </span>
@@ -664,6 +673,7 @@ export default function DefectsPage() {
           {[
             { id: "ALL", label: "Semua Kategori" },
             { id: "LIGHT_VECHICLE", label: "🚗 Light Vehicle", count: stats.byCategory?.LIGHT_VECHICLE },
+            { id: "DUMP_TRUCK", label: "🚛 Dump Truck", count: stats.byCategory?.DUMP_TRUCK },
             { id: "TELEHENDLER", label: "🚜 Telehandler", count: stats.byCategory?.TELEHENDLER },
             { id: "STORING_TRUCK", label: "🚛 Storing Truck", count: stats.byCategory?.STORING_TRUCK },
             { id: "FUEL_TRUCK", label: "⛽ Fuel Truck", count: stats.byCategory?.FUEL_TRUCK },

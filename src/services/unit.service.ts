@@ -181,6 +181,7 @@ export function generateUnitCsvTemplate(): string {
     '#    - CRANE_TRUCK',
     '#    - MOBILE_CRANE',
     '#    - AMBULANCE',
+    '#    - DUMP_TRUCK (atau DT)',
     '# 4. Kolom description: Tipe/Model (Opsional)',
     '# 5. Kolom ownerName: Pemilik Unit (Default: PT Batara Dharma Persada)',
     '# 6. Kolom km: Odometer KM Awal (Angka, default: 0)',
@@ -209,6 +210,7 @@ export function generateUnitCsvTemplate(): string {
     ['CP-01', 'COMPRESSOR', 'Airman', 'PDS185S Diesel Compressor', 'PT Batara Dharma Persada', '0', '0', 'ACTIVE'],
     ['EX-01', 'EXCAVATOR', 'Komatsu', 'PC200-8M0 Excavator', 'PT Batara Dharma Persada', '0', '0', 'ACTIVE'],
     ['DZ-01', 'DOZER', 'Caterpillar', 'D6R Bulldozer', 'PT Batara Dharma Persada', '0', '0', 'ACTIVE'],
+    ['DT-01', 'DUMP_TRUCK', 'Hino', 'FM 260 JD Dump Truck', 'PT Batara Dharma Persada', '0', '0', 'ACTIVE'],
   ];
 
   const csvLines = [
@@ -320,6 +322,11 @@ export function parseUnitsCsv(csvText: string): {
     MC: 'MOBILE_CRANE',
     AMBULANCE: 'AMBULANCE',
     AMBULAN: 'AMBULANCE',
+    DUMP_TRUCK: 'DUMP_TRUCK',
+    DUMPTRUCK: 'DUMP_TRUCK',
+    DT: 'DUMP_TRUCK',
+    TRUCK_DUMP: 'DUMP_TRUCK',
+    DUMP: 'DUMP_TRUCK',
   };
 
   const parsedUnits: Partial<UnitInput>[] = [];

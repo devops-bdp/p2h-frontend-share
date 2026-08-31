@@ -81,6 +81,11 @@ import {
   BAKU_COMPRESSOR_LISTRIK_CHECKS,
   CompressorCheckItem,
   CompressorCondition,
+  BAKU_DUMP_TRUCK_CHECKS,
+  DUMP_TRUCK_CATEGORIES,
+  BAKU_DUMP_TRUCK_FIT_TO_WORK,
+  DumpTruckCheckItem,
+  DumpTruckCondition,
 } from "@/services/p2h.service";
 
 // ================= FORM BAKU STANDAR (20 GENERAL CHECK ITEMS) =================
@@ -180,7 +185,7 @@ function mapDepartmentToSection(department?: string): string {
   return "PLANT";
 }
 
-type P2HCategory = "LIGHT_VECHICLE" | "TELEHENDLER" | "STORING_TRUCK" | "FUEL_TRUCK" | "GENSET" | "COMPRESSOR";
+type P2HCategory = "LIGHT_VECHICLE" | "TELEHENDLER" | "STORING_TRUCK" | "FUEL_TRUCK" | "GENSET" | "COMPRESSOR" | "DUMP_TRUCK";
 
 function P2HFormContent() {
   const router = useRouter();
@@ -189,6 +194,7 @@ function P2HFormContent() {
   const rawUnitId = searchParams.get("unitId");
 
   const activeCategory: P2HCategory = useMemo(() => {
+    if (rawCategory === "DUMP_TRUCK") return "DUMP_TRUCK";
     if (rawCategory === "COMPRESSOR") return "COMPRESSOR";
     if (rawCategory === "GENSET") return "GENSET";
     if (rawCategory === "FUEL_TRUCK") return "FUEL_TRUCK";
@@ -202,6 +208,7 @@ function P2HFormContent() {
   const isFuelTruck = activeCategory === "FUEL_TRUCK";
   const isGenset = activeCategory === "GENSET";
   const isCompressor = activeCategory === "COMPRESSOR";
+  const isDumpTruck = activeCategory === "DUMP_TRUCK";
 
   // Options from API
   const [units, setUnits] = useState<any[]>([]);
@@ -233,6 +240,10 @@ function P2HFormContent() {
   });
   const [safetyTools, setSafetyTools] = useState<SafetyToolItem[]>(BAKU_SAFETY_TOOLS);
   const [fitToWork, setFitToWork] = useState<FitToWorkItem[]>(BAKU_FIT_TO_WORK);
+
+  // Form States - Dump Truck Checklist (33 items + 5 Fit to Work)
+  const [dumpTruckChecks, setDumpTruckChecks] = useState<DumpTruckCheckItem[]>(BAKU_DUMP_TRUCK_CHECKS);
+  const [dumpTruckFitToWork, setDumpTruckFitToWork] = useState<FitToWorkItem[]>(BAKU_DUMP_TRUCK_FIT_TO_WORK);
 
   // Form States - Telehandler Checklist (35 items)
   const [telehandlerChecks, setTelehandlerChecks] = useState<TelehandlerCheckItem[]>(BAKU_TELEHANDLER_CHECKS);
@@ -579,6 +590,42 @@ function P2HFormContent() {
     }
   };
 
+  // Dump Truck Handlers
+  const handleDumpTruckCondition = (id: number, condition: DumpTruckCondition) => {
+    setDumpTruckChecks((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, condition } : item))
+    );
+    if ((condition === "RUSAK" || condition === "TIDAK BAIK" || condition === "PERLU TINDAKAN") && unitStatus === "LAYAK") {
+      setUnitStatus("SIAP");
+    }
+  };
+
+  const handleDumpTruckNote = (id: number, note: string) => {
+    setDumpTruckChecks((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, note } : item))
+    );
+  };
+
+  const handleDumpTruckMarkCategoryAllGood = (categoryName: string) => {
+    setDumpTruckChecks((prev) =>
+      prev.map((item) =>
+        item.category === categoryName ? { ...item, condition: "BAIK", note: "" } : item
+      )
+    );
+  };
+
+  const handleDumpTruckMarkAllGood = () => {
+    setDumpTruckChecks((prev) =>
+      prev.map((item) => ({ ...item, condition: "BAIK", note: "" }))
+    );
+  };
+
+  const handleDumpTruckFitToWork = (index: number, answer: "YA" | "TIDAK") => {
+    const updated = [...dumpTruckFitToWork];
+    updated[index].answer = answer;
+    setDumpTruckFitToWork(updated);
+  };
+
   // Tyre Position Toggle
   const handleToggleTyrePos = (pos: string) => {
     const current = tyreCheck.problemPositions;
@@ -690,7 +737,9 @@ function P2HFormContent() {
         shift,
         km: isGenset || isCompressor ? (km === "" ? 0 : Number(km)) : Number(km),
         hourMeter: hourMeter !== "" ? Number(hourMeter) : selectedUnit?.hourMeter || null,
-        damageChecks: isCompressor
+        damageChecks: isDumpTruck
+          ? dumpTruckChecks
+          : isCompressor
           ? activeCompressorChecks
           : isGenset
           ? gensetChecks
@@ -703,7 +752,13 @@ function P2HFormContent() {
           : damageChecks,
         tyreCheck,
         safetyTools,
-        fitToWork: isGenset || isFuelTruck || isCompressor ? [] : isStoringTruck ? storingTruckFitToWork : fitToWork,
+        fitToWork: isDumpTruck
+          ? dumpTruckFitToWork
+          : isGenset || isFuelTruck || isCompressor
+          ? []
+          : isStoringTruck
+          ? storingTruckFitToWork
+          : fitToWork,
         warningDetails: hasWarning ? warningDetails : null,
         driverValidation: true,
         unitStatus,
@@ -755,6 +810,14 @@ function P2HFormContent() {
 
   const getCategoryHeaderInfo = () => {
     switch (activeCategory) {
+      case "DUMP_TRUCK":
+        return {
+          title: "FORM P2H DUMP TRUCK (DT)",
+          subtitle: "Pemeriksaan 6 kategori baku dump truck: body/vessel, hidrolik hoist, suspensi/ban tandem, rem angin & safety K3.",
+          badge: "🚛 DUMP TRUCK",
+          theme: "bg-orange-500/10 border-orange-500/30 text-orange-400",
+          icon: <Truck className="w-5 h-5" />,
+        };
       case "COMPRESSOR":
         return {
           title: "FORM P2H KOMPRESOR (COMPRESSOR)",
@@ -1368,9 +1431,211 @@ function P2HFormContent() {
           </div>
 
           {/* ========================================================================= */}
-          {/* MODE A-00: COMPRESSOR FORM CHECKLIST (DIESEL 10 ITEMS / LISTRIK 9 ITEMS)  */}
+          {/* MODE DT: DUMP TRUCK FORM CHECKLIST (33 ITEMS + 5 FIT TO WORK)            */}
           {/* ========================================================================= */}
-          {isCompressor ? (
+          {isDumpTruck ? (
+            <div className="space-y-5">
+              <div className="p-4 sm:p-5 rounded-2xl bg-orange-500/10 border border-orange-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                    <Truck className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                      <span>DAFTAR PEMERIKSAAN P2H DUMP TRUCK (33 ITEM BAKU)</span>
+                    </h3>
+                    <p className="text-xs text-slate-300 mt-0.5">
+                      Pemeriksaan dump vessel, silinder hoist, ban tandem, rem angin, dan kesiapan hauling driver. Pilihan: <strong className="text-emerald-400">BAIK</strong> atau <strong className="text-rose-400">RUSAK</strong>.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleDumpTruckMarkAllGood}
+                  className="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-orange-500/20 cursor-pointer shrink-0"
+                >
+                  <CheckCheck className="w-4 h-4" />
+                  <span>Tandai Semua 33 Item BAIK</span>
+                </button>
+              </div>
+
+              {DUMP_TRUCK_CATEGORIES.map((cat, catIdx) => {
+                const catItems = dumpTruckChecks.filter((item) => item.category === cat.name);
+                const goodCount = catItems.filter((i) => i.condition === "BAIK" || i.condition === "NORMAL").length;
+                const isAllGood = goodCount === catItems.length;
+
+                return (
+                  <div
+                    key={cat.id}
+                    className="p-4 sm:p-5 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-4 shadow-xl"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-7 h-7 rounded-xl bg-orange-500/15 border border-orange-500/30 text-orange-400 font-bold text-xs flex items-center justify-center">
+                          {catIdx + 1}
+                        </span>
+                        <div>
+                          <h4 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">
+                            {cat.name}
+                          </h4>
+                          <span className="text-[11px] text-slate-400">
+                            {catItems.length} poin pemeriksaan &bull; Status:{" "}
+                            <span className={isAllGood ? "text-emerald-400 font-semibold" : "text-amber-400 font-semibold"}>
+                              {goodCount}/{catItems.length} Baik
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDumpTruckMarkCategoryAllGood(cat.name)}
+                        className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors border border-slate-700 self-start sm:self-auto cursor-pointer"
+                      >
+                        Semua Baik ({catItems.length})
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {catItems.map((check) => {
+                        const isProblem = check.condition === "RUSAK" || check.condition === "TIDAK BAIK" || check.condition === "PERLU TINDAKAN";
+
+                        return (
+                          <div
+                            key={check.id}
+                            className={`p-3.5 rounded-2xl border transition-all space-y-2.5 ${
+                              isProblem
+                                ? "bg-rose-950/25 border-rose-500/40"
+                                : "bg-slate-950/60 border-slate-800/80"
+                            }`}
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                              <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                                <span className="w-5 h-5 rounded-md bg-slate-800 text-slate-400 font-mono text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                                  {check.id}
+                                </span>
+                                <span className="text-xs font-semibold text-slate-200 leading-relaxed">
+                                  {check.item}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDumpTruckCondition(check.id, "BAIK")}
+                                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                    !isProblem
+                                      ? "bg-emerald-500 text-slate-950 font-extrabold shadow-md shadow-emerald-500/20"
+                                      : "bg-slate-900 hover:bg-slate-800 text-slate-400 border border-slate-800"
+                                  }`}
+                                >
+                                  BAIK
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDumpTruckCondition(check.id, "RUSAK")}
+                                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                    isProblem
+                                      ? "bg-rose-500 text-white font-extrabold shadow-md shadow-rose-500/20"
+                                      : "bg-slate-900 hover:bg-slate-800 text-slate-400 border border-slate-800"
+                                  }`}
+                                >
+                                  RUSAK
+                                </button>
+                              </div>
+                            </div>
+
+                            {isProblem && (
+                              <div className="pt-2 border-t border-slate-800/80 animate-in fade-in duration-150">
+                                <input
+                                  type="text"
+                                  value={check.note || ""}
+                                  onChange={(e) => handleDumpTruckNote(check.id, e.target.value)}
+                                  placeholder={`Catatan detail temuan untuk "${check.item}"...`}
+                                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700/80 rounded-xl text-xs placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* FIT TO WORK DRIVER DUMP TRUCK */}
+              <div className="p-5 sm:p-6 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-4 shadow-xl">
+                <div className="flex items-center gap-3 pb-3 border-b border-slate-800">
+                  <div className="w-9 h-9 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400">
+                    <HeartPulse className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-white uppercase tracking-wider">
+                      KELAYAKAN DRIVER DUMP TRUCK (FIT TO WORK)
+                    </h3>
+                    <p className="text-xs text-slate-400">Kesiapan fisik driver, kepatuhan APD &amp; SIMPER aktif hauling.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {dumpTruckFitToWork.map((ftw, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 flex items-center justify-between gap-3"
+                    >
+                      <span className="text-xs font-semibold text-slate-200">{ftw.question}</span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleDumpTruckFitToWork(idx, "YA")}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                            ftw.answer === "YA"
+                              ? "bg-emerald-500 text-slate-950"
+                              : "bg-slate-900 text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          YA
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDumpTruckFitToWork(idx, "TIDAK")}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                            ftw.answer === "TIDAK"
+                              ? "bg-rose-500 text-white"
+                              : "bg-slate-900 text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          TIDAK
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Catatan Tambahan */}
+              <div className="p-5 sm:p-6 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-3 shadow-xl">
+                <div className="flex items-center gap-2.5 pb-2 border-b border-slate-800">
+                  <FileText className="w-5 h-5 text-orange-400" />
+                  <h4 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">
+                    TEMUAN &amp; CATATAN TAMBAHAN DUMP TRUCK (OPSIONAL)
+                  </h4>
+                </div>
+                <p className="text-xs text-slate-400">
+                  Tuliskan catatan khusus terkait dump vessel, silinder hoist, rem angin, kondisi ban, atau keluhan transmisi Dump Truck.
+                </p>
+                <textarea
+                  rows={3}
+                  value={supervisorNotes}
+                  onChange={(e) => setSupervisorNotes(e.target.value)}
+                  placeholder="Tuliskan catatan atau temuan kerusakan di sini..."
+                  className="w-full p-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500 leading-relaxed"
+                />
+              </div>
+            </div>
+          ) : isCompressor ? (
             <div className="space-y-5">
               <div className="p-4 sm:p-5 rounded-2xl bg-teal-500/10 border border-teal-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
                 <div className="flex items-center gap-3">
